@@ -26,7 +26,6 @@ uv tool install quibbler
 
 ## Usage
 
-
 Start the quibbler server in the background
 
 ```bash
@@ -36,6 +35,20 @@ quibbler server
 You then need to configure the claude code hook to send events to quibbler. Run `quibbler add` to do this, either from a specific project dir you want to add it to, or from `$HOME` if you want it globally.
 
 Then just start claude code! Start coding and it will run in the background and interrupt your agent when needed.
+
+## Configuration
+
+### Model Selection
+
+By default, quibbler uses `claude-haiku-4-5-20251001`. You can change this by creating or editing `~/.quibbler/config.json`:
+
+```json
+{
+  "model": "claude-3-5-sonnet-20241022"
+}
+```
+
+Available models depend on your Anthropic API access. Haiku is the default for fast, cost-effective monitoring.
 
 ## License
 
