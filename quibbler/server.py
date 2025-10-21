@@ -24,8 +24,9 @@ from fastapi import FastAPI, HTTPException, Request
 
 from quibbler.agent import Quibbler
 from quibbler.prompts import load_prompt
-from quibbler.logger import logger
+from quibbler.logger import get_logger
 
+logger = get_logger(__name__)
 app = FastAPI(title="Quibbler Server", version="1.0")
 
 # session_id -> Quibbler
