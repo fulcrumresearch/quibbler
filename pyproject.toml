@@ -1,0 +1,19 @@
+[project]
+name = "critic"
+version = "0.1.0"
+description = "Independent AI monitoring for Claude Code agents"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "claude-agent-sdk>=0.1.0",
+    "fastapi>=0.117.1",
+    "uvicorn>=0.37.0",
+    "requests>=2.30.0",
+]
+
+[project.scripts]
+critic = "critic.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
