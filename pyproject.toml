@@ -1,5 +1,5 @@
 [project]
-name = "code-critic"
+name = "quibbler"
 version = "0.1.0"
 description = "AI monitoring for Claude Code agents"
 readme = "README.md"
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-critic = "critic.cli:main"
+quibbler = "critic.cli:main"
 
 [build-system]
 requires = ["hatchling"]

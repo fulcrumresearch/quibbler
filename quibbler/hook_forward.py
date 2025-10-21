@@ -11,11 +11,11 @@ from urllib.parse import quote
 
 import requests
 
-from critic.logger import logger
+from quibbler.logger import logger
 
 
 def forward_hook() -> int:
-    """Forward hook events to the critic server"""
+    """Forward hook events to the quibbler server"""
     logger.info("=== Hook forward starting ===")
 
     if os.getenv("CLAUDE_MONITOR_SKIP_FORWARD") == "1":
@@ -48,7 +48,7 @@ def forward_hook() -> int:
     logger.info(f"Session ID: {session_id}")
     logger.info(f"Source path: {source_path}")
 
-    base = os.getenv("CRITIC_MONITOR_BASE", "http://127.0.0.1:8081")
+    base = os.getenv("QUIBBLER_MONITOR_BASE", "http://127.0.0.1:8081")
     session_id_enc = quote(session_id, safe="")
     url = f"{base.rstrip('/')}/hook/{session_id_enc}"
 

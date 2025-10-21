@@ -1,11 +1,11 @@
-"""Prompt templates for the critic agent"""
+"""Prompt templates for the quibbler agent"""
 
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Shared critic prompt - core quality enforcement guidance
+# Shared quibbler prompt - core quality enforcement guidance
 SHARED_CRITIC_PROMPT = """## Your Mindset
 
 You are the "bad cop" quality gate. Assume the executor will:
@@ -70,14 +70,14 @@ Your job is to ACTIVELY PREVENT these issues through frequent communication and 
 - Using wrong tool (bash grep vs Grep tool, bash cat vs Read tool)
 """
 
-# Critic instructions (file-based, writes to .critic-messages.txt)
+# Quibbler instructions (file-based, writes to .quibbler-messages.txt)
 CRITIC_INSTRUCTIONS = """## How to Provide Feedback
 
-When you have observations or concerns, use the Write tool to create/update `.critic-messages.txt`:
+When you have observations or concerns, use the Write tool to create/update `.quibbler-messages.txt`:
 
 **Format your feedback clearly:**
 ```
-[TIMESTAMP] Critic Feedback
+[TIMESTAMP] Quibbler Feedback
 
 ISSUE: [Brief description of the problem]
 
@@ -114,22 +114,22 @@ Track mentally:
 - **Write when needed**: Only create feedback when there's something meaningful to say
 - **Be specific**: Reference exact events, files, or claims in your feedback
 - **Prevent, don't fix**: Help catch issues before they become problems
-- **Use Write tool**: Your ONLY communication method is writing to `.critic-messages.txt`
+- **Use Write tool**: Your ONLY communication method is writing to `.quibbler-messages.txt`
 
 Start by observing the hook events and understanding what the agent is doing. Only write feedback when you have meaningful observations or concerns."""
 
 
 def get_default_prompt() -> str:
-    """Get the default critic prompt content"""
-    return f"""# Critic System Prompt
+    """Get the default quibbler prompt content"""
+    return f"""# Quibbler System Prompt
 
-This is your global Critic configuration. You can:
-- Edit this file to customize the Critic's behavior globally
-- Override per-project by creating `.critic.md` in your project directory
+This is your global Quibbler configuration. You can:
+- Edit this file to customize the Quibbler's behavior globally
+- Override per-project by creating `.quibbler.md` in your project directory
 
 ---
 
-You are a PARANOID quality enforcer criticizing agent work through hook events.
+You are a PARANOID quality enforcer quibblerizing agent work through hook events.
 
 {SHARED_CRITIC_PROMPT}
 
@@ -138,9 +138,9 @@ You are a PARANOID quality enforcer criticizing agent work through hook events.
 
 def load_prompt(source_path: str) -> str:
     """
-    Load the critic prompt with the following priority:
-    1. Local .critic.md in source_path
-    2. Global ~/.critic/prompt.md
+    Load the quibbler prompt with the following priority:
+    1. Local .quibbler.md in source_path
+    2. Global ~/.quibbler/prompt.md
     3. Default built-in prompt
 
     Args:
@@ -149,8 +149,8 @@ def load_prompt(source_path: str) -> str:
     Returns:
         The prompt text
     """
-    LOCAL_PROMPT_NAME = ".critic.md"
-    GLOBAL_PROMPT_PATH = Path.home() / ".critic" / "prompt.md"
+    LOCAL_PROMPT_NAME = ".quibbler.md"
+    GLOBAL_PROMPT_PATH = Path.home() / ".quibbler" / "prompt.md"
 
     # Try local override first
     local_prompt = Path(source_path) / LOCAL_PROMPT_NAME

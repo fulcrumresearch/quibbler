@@ -2,11 +2,11 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-# Create ~/.orchestra directory if it doesn't exist
-LOG_DIR = Path.home() / ".critic"
+# Create ~/.quibbler directory if it doesn't exist
+LOG_DIR = Path.home() / ".quibbler"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-LOG_FILE = LOG_DIR / "critic.log"
+LOG_FILE = LOG_DIR / "quibbler.log"
 
 
 def get_logger(name: str) -> logging.Logger:
