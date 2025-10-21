@@ -1,6 +1,6 @@
 [project]
 name = "quibbler"
-version = "0.1.4"
+version = "0.1.5"
 description = "AI monitoring for Claude Code agents"
 readme = "README.md"
 requires-python = ">=3.12"

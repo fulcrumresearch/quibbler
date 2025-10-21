@@ -9,6 +9,7 @@ It can help you automatically squash behaviors like:
 - not following previously defined user instructions
 - custom defined rules, like using gnarly try/except blocks, not using uv, doing weird imagined backwards compatibility work.
 
+It will also automatically detect patterns in your refusal and save them as rules for its own monitoring. 
 
 ## Installation
 
