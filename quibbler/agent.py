@@ -1,8 +1,9 @@
 """Quibbler agent for Claude Code"""
 
+from contextlib import suppress
 from dataclasses import dataclass, field
 from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
-from typing import List, Dict, Any, Optional
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import asyncio
 import json
@@ -59,18 +60,33 @@ class Quibbler:
     session_id: str
     model: str = DEFAULT_MODEL
 
-    client: Optional[ClaudeSDKClient] = field(default=None, init=False)
     queue: asyncio.Queue = field(
         default_factory=lambda: asyncio.Queue(), init=False
     )
     task: Optional[asyncio.Task] = field(default=None, init=False)
 
     async def start(self) -> None:
-        """Start the quibbler agent"""
-        if self.client is not None:
+        """Start the quibbler agent background task"""
+        if self.task is not None:
             return
+        self.task = asyncio.create_task(self._run())
+        logger.info(f"Started quibbler with model: {_config.model}")
 
-        # Update system prompt with session-specific filename, to have session mapped messaging
+    async def stop(self) -> None:
+        """Stop the quibbler agent and wait for task to complete"""
+        if self.task is None:
+            return
+        self.task.cancel()
+        with suppress(asyncio.CancelledError):
+            await self.task
+        self.task = None
+
+    async def enqueue(self, evt: Dict[str, Any]) -> None:
+        """Add an event to the processing queue (waits if queue is full)"""
+        await self.queue.put(evt)
+
+    async def _run(self) -> None:
+        """Main quibbler loop - manages client lifecycle and processes events"""
         message_file = f".quibbler-{self.session_id}.txt"
         updated_prompt = self.system_prompt.replace(
             ".quibbler-messages.txt", message_file
@@ -86,50 +102,27 @@ class Quibbler:
             mcp_servers={},
         )
 
-        self.client = ClaudeSDKClient(options=options)
-        await self.client.__aenter__()
-        self.task = asyncio.create_task(self._run())
-        logger.info(f"Started quibbler with model: {_config.model}")
+        try:
+            async with ClaudeSDKClient(options=options) as client:
+                # Startup message
+                await client.query(
+                    "Quibbler session started. Watch the events and intervene when necessary. Build understanding in your head."
+                )
+                async for chunk in client.receive_response():
+                    logger.info("startup> %s", chunk)
 
-    async def stop(self) -> None:
-        """Stop the quibbler agent"""
-        if self.task:
-            self.task.cancel()
-            try:
-                await self.task
-            except asyncio.CancelledError:
-                pass  # Expected during shutdown
-            self.task = None
-        if self.client:
-            await self.client.__aexit__(None, None, None)
-            self.client = None
-
-    async def enqueue(self, evt: Dict[str, Any]) -> None:
-        """Add an event to the processing queue"""
-        self.queue.put_nowait(evt)
-
-    async def _run(self) -> None:
-        """Main quibbler loop - processes events one at a time"""
-        # Send startup message
-        await self.client.query(
-            "Quibbler session started. Watch the events and intervene when necessary. Build understanding in your head."
-        )
-
-        async for chunk in self.client.receive_response():
-            logger.info("startup> %s", chunk)
-
-        # Process events one at a time
-        while True:
-            # Get event (blocking)
-            evt = await self.queue.get()
-
-            try:
-                # Format event and send
-                prompt = format_event_for_agent(evt)
-
-                await self.client.query(prompt)
-                async for chunk in self.client.receive_response():
-                    logger.info("event> %s", chunk)
-            finally:
-                # Mark event as done
-                self.queue.task_done()
+                # Process events one at a time
+                while True:
+                    evt = await self.queue.get()
+                    try:
+                        prompt = format_event_for_agent(evt)
+                        await client.query(prompt)
+                        async for chunk in client.receive_response():
+                            logger.info("event> %s", chunk)
+                    finally:
+                        self.queue.task_done()
+        except asyncio.CancelledError:
+            # Normal shutdown - task was cancelled
+            raise
+        except Exception:
+            logger.exception("Quibbler runner crashed")
