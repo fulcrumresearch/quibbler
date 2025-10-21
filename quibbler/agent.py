@@ -53,7 +53,7 @@ def format_event_for_agent(evt: Dict[str, Any]) -> str:
 
 @dataclass
 class Quibbler:
-    """Quibbler agent that writes feedback to quibbler-$session_id.txt"""
+    """Quibbler agent that writes feedback to .quibbler/$session_id.txt"""
 
     system_prompt: str
     source_path: str
@@ -70,6 +70,7 @@ class Quibbler:
         if self.task is not None:
             return
         self.task = asyncio.create_task(self._run())
+        logger.info(f"with prompt: {self.system_prompt}")
         logger.info(f"Started quibbler with model: {_config.model}")
 
     async def stop(self) -> None:
@@ -87,7 +88,11 @@ class Quibbler:
 
     async def _run(self) -> None:
         """Main quibbler loop - manages client lifecycle and processes events"""
-        message_file = f".quibbler-{self.session_id}.txt"
+        # Create .quibbler directory if needed and set message file path
+        quibbler_dir = Path(self.source_path) / ".quibbler"
+        quibbler_dir.mkdir(exist_ok=True)
+        message_file = str(quibbler_dir / f"{self.session_id}.txt")
+
         updated_prompt = self.system_prompt.replace(
             ".quibbler-messages.txt", message_file
         )

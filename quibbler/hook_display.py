@@ -4,7 +4,7 @@ Display hook for quibbler feedback.
 
 This script:
 1. Reads hook event JSON from stdin to extract session_id
-2. Checks if quibbler-$session_id.txt exists in the current working directory
+2. Checks if .quibbler/$session_id.txt exists in the current working directory
 3. If exists: reads contents, prints to stderr, deletes file
 4. If not exists: exits silently
 
@@ -29,8 +29,8 @@ def display_feedback() -> int:
     if not session_id:
         return 0
 
-    # Look for session-specific quibbler feedback file
-    quibbler_file = Path.cwd() / f".quibbler-{session_id}.txt"
+    # Look for session-specific quibbler feedback file in .quibbler directory
+    quibbler_file = Path.cwd() / ".quibbler" / f"{session_id}.txt"
     if not quibbler_file.exists():
         return 0
 
