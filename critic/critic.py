@@ -72,7 +72,7 @@ class Critic:
         self.queue.put_nowait(evt)
 
     async def _run(self) -> None:
-        """Main critic loop - processes events one at a time"""
+        """Main critic loop - processes batched events"""
         # Send startup message
         await self.client.query(
             "Critic session started. Watch the events and intervene when necessary. Build understanding in your head."
@@ -81,14 +81,40 @@ class Critic:
         async for chunk in self.client.receive_response():
             logger.info("startup> %s", chunk)
 
-        # Process events one at a time
+        # Process events in batches
         while True:
-            evt = await self.queue.get()
+            # Collect batch of events
+            batch = []
 
-            prompt = format_event_for_agent(evt)
-            await self.client.query(prompt)
+            # Get first event (blocking)
+            first_event = await self.queue.get()
+            batch.append(first_event)
+            batch_start = asyncio.get_event_loop().time()
 
-            async for chunk in self.client.receive_response():
-                logger.info("event> %s", chunk)
+            # Collect more events with timeout
+            while True:
+                batch_age = asyncio.get_event_loop().time() - batch_start
 
-            self.queue.task_done()
+                # Stop if batch is full or too old
+                if len(batch) >= MAX_BATCH_SIZE or batch_age >= MAX_BATCH_WAIT:
+                    break
+
+                # Try to get more events (with timeout)
+                try:
+                    evt = await asyncio.wait_for(self.queue.get(), timeout=BATCH_WAIT_TIME)
+                    batch.append(evt)
+                except asyncio.TimeoutError:
+                    break
+
+            # Format all events and send as one message
+            try:
+                prompts = [format_event_for_agent(evt) for evt in batch]
+                combined_prompt = "\n\n---\n\n".join(prompts)
+
+                await self.client.query(combined_prompt)
+                async for chunk in self.client.receive_response():
+                    logger.info("batch[%d]> %s", len(batch), chunk)
+            finally:
+                # Mark all events as done
+                for _ in batch:
+                    self.queue.task_done()

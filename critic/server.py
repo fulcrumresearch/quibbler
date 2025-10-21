@@ -15,9 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import os
-import sys
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -26,17 +24,9 @@ from fastapi import FastAPI, HTTPException, Request
 
 from critic.critic import Critic
 from critic.prompts import load_prompt
-from critic.logging_config import setup_logging
-
-# Setup logging
-setup_logging()
-
-# Prevent the critic agent itself from triggering hooks (would create infinite loop)
-os.environ["CLAUDE_MONITOR_SKIP_FORWARD"] = "1"
+from critic.logger import logger
 
 app = FastAPI(title="Critic Server", version="1.0")
-
-logger = logging.getLogger("critic_server")
 
 # session_id -> Critic
 _critics: Dict[str, Critic] = {}
@@ -66,7 +56,9 @@ async def _shutdown() -> None:
         _critics.pop(sid, None)
 
 
-async def _process_event_in_background(session_id: str, source_path: str, evt: Dict[str, Any]) -> None:
+async def _process_event_in_background(
+    session_id: str, source_path: str, evt: Dict[str, Any]
+) -> None:
     """Process event in background without blocking the HTTP response"""
     try:
         critic = await get_or_create_critic(session_id, source_path)
@@ -106,6 +98,9 @@ async def hook(request: Request, session_id: str) -> Dict[str, str]:
 
 def run_server(port: int = 8081):
     """Run the critic server on the specified port"""
+    # Prevent the critic agent itself from triggering hooks (would create infinite loop)
+    os.environ["CLAUDE_MONITOR_SKIP_FORWARD"] = "1"
+
     logger.info(f"Starting Critic Server on port {port}")
     logger.info(f"Hook endpoint: http://0.0.0.0:{port}/hook/{{session_id}}")
     logger.info(f"Feedback written to: .critic-messages.txt")

@@ -69,11 +69,6 @@ def cmd_add(args):
         {"hooks": [{"type": "command", "command": "critic notify"}]}
     ]
 
-    # Add UserPromptSubmit hook for critic-notify
-    settings["hooks"]["UserPromptSubmit"] = [
-        {"hooks": [{"type": "command", "command": "critic notify"}]}
-    ]
-
     # Write back to file
     with open(settings_file, "w") as f:
         json.dump(settings, f, indent=2)
