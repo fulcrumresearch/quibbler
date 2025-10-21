@@ -96,8 +96,8 @@ class Quibbler:
             self.task.cancel()
             try:
                 await self.task
-            except Exception:
-                pass
+            except asyncio.CancelledError:
+                pass  # Expected during shutdown
             self.task = None
         if self.client:
             await self.client.__aexit__(None, None, None)
