@@ -33,13 +33,9 @@ Start the quibbler server in the background
 quibbler server
 ```
 
-Default port is 8081.
+You then need to configure the claude code hook to send events to quibbler. Run `quibbler add` to do this, either from a specific project dir you want to add it to, or from `$HOME` if you want it globally.
 
-You need to configure the claude code hook for quibbler.
-
-Run `quibbler add` to do this, either from a specific project dir you want to add it to, or from `$HOME` if you want it globally.
-
-Then just start claude code! It will run in the background and interrupt your agent when needed.
+Then just start claude code! Start coding and it will run in the background and interrupt your agent when needed.
 
 ## License
 
