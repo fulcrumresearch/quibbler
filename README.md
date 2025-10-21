@@ -40,16 +40,10 @@ Then just start claude code! Start coding and it will run in the background and 
 
 ### Model Selection
 
-By default, quibbler uses `claude-haiku-4-5-20251001`. You can change this by creating or editing `~/.quibbler/config.json`:
+By default, quibbler uses Claude Haiku 4.5 for speed - you can change this by creating or editing `~/.quibbler/config.json`:
 
 ```json
 {
   "model": "claude-3-5-sonnet-20241022"
 }
 ```
-
-Available models depend on your Anthropic API access. Haiku is the default for fast, cost-effective monitoring.
-
-## License
-
-MIT
