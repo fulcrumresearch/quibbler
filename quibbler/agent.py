@@ -93,9 +93,7 @@ class Quibbler:
         quibbler_dir.mkdir(exist_ok=True)
         message_file = str(quibbler_dir / f"{self.session_id}.txt")
 
-        updated_prompt = self.system_prompt.replace(
-            ".quibbler-messages.txt", message_file
-        )
+        updated_prompt = self.system_prompt.format(message_file=message_file)
 
         options = ClaudeAgentOptions(
             cwd=self.source_path,
