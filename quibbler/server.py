@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -27,10 +28,23 @@ from quibbler.prompts import load_prompt
 from quibbler.logger import get_logger
 
 logger = get_logger(__name__)
-app = FastAPI(title="Quibbler Server", version="1.0")
 
 # session_id -> Quibbler
 _quibblers: Dict[str, Quibbler] = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown"""
+    # Startup
+    yield
+    # Shutdown
+    for sid, c in list(_quibblers.items()):
+        await c.stop()
+        _quibblers.pop(sid, None)
+
+
+app = FastAPI(title="Quibbler Server", version="1.0", lifespan=lifespan)
 
 
 async def get_or_create_quibbler(session_id: str, source_path: str) -> Quibbler:
@@ -49,13 +63,6 @@ async def get_or_create_quibbler(session_id: str, source_path: str) -> Quibbler:
         logger.info("started quibbler for session_id=%s in %s", session_id, source_path)
 
     return quibbler
-
-
-@app.on_event("shutdown")
-async def _shutdown() -> None:
-    for sid, c in list(_quibblers.items()):
-        await c.stop()
-        _quibblers.pop(sid, None)
 
 
 async def _process_event_in_background(
@@ -80,6 +87,8 @@ async def hook(request: Request, session_id: str) -> Dict[str, str]:
         raise HTTPException(status_code=400, detail="session_id is required")
 
     source_path = data.get("source_path")
+    if not source_path:
+        raise HTTPException(status_code=400, detail="source_path is required")
 
     # Create clean event with received timestamp
     evt = {

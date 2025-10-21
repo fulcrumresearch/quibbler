@@ -61,7 +61,7 @@ class Quibbler:
 
     client: Optional[ClaudeSDKClient] = field(default=None, init=False)
     queue: asyncio.Queue = field(
-        default_factory=lambda: asyncio.Queue(maxsize=1000), init=False
+        default_factory=lambda: asyncio.Queue(), init=False
     )
     task: Optional[asyncio.Task] = field(default=None, init=False)
 
@@ -71,8 +71,9 @@ class Quibbler:
             return
 
         # Update system prompt with session-specific filename, to have session mapped messaging
+        message_file = f".quibbler-{self.session_id}.txt"
         updated_prompt = self.system_prompt.replace(
-            ".quibbler-messages.txt", f".quibbler-{self.session_id}.txt"
+            ".quibbler-messages.txt", message_file
         )
 
         options = ClaudeAgentOptions(
