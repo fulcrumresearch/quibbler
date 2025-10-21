@@ -6,14 +6,39 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import asyncio
 import json
-import logging
+import os
+from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from quibbler.logger import get_logger
 
-# Batch processing configuration
-BATCH_WAIT_TIME = 10  # Wait 10 seconds after first event before processing
-MAX_BATCH_SIZE = 10  # Process immediately if 10 events accumulate
-MAX_BATCH_WAIT = 20  # Never wait more than 20 seconds total
+logger = get_logger(__name__)
+
+DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
+
+@dataclass
+class QuibblerConfig:
+    """Configuration for Quibbler agent"""
+
+    model: str = DEFAULT_MODEL
+
+
+def load_config() -> QuibblerConfig:
+    """Load config from ~/.quibbler/config.json"""
+    config_file = Path.home() / ".quibbler" / "config.json"
+
+    if config_file.exists():
+        try:
+            with open(config_file) as f:
+                data = json.load(f)
+                return QuibblerConfig(model=data.get("model", DEFAULT_MODEL))
+        except Exception as e:
+            logger.warning(f"Failed to load config: {e}")
+
+    return QuibblerConfig(model=DEFAULT_MODEL)
+
+
+_config = load_config()
 
 
 def format_event_for_agent(evt: Dict[str, Any]) -> str:
@@ -32,9 +57,12 @@ class Quibbler:
     system_prompt: str
     source_path: str
     session_id: str
+    model: str = DEFAULT_MODEL
 
     client: Optional[ClaudeSDKClient] = field(default=None, init=False)
-    queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=1000), init=False)
+    queue: asyncio.Queue = field(
+        default_factory=lambda: asyncio.Queue(maxsize=1000), init=False
+    )
     task: Optional[asyncio.Task] = field(default=None, init=False)
 
     async def start(self) -> None:
@@ -42,10 +70,9 @@ class Quibbler:
         if self.client is not None:
             return
 
-        # Update system prompt with session-specific filename
+        # Update system prompt with session-specific filename, to have session mapped messaging
         updated_prompt = self.system_prompt.replace(
-            ".quibbler-messages.txt",
-            f"quibbler-{self.session_id}.txt"
+            ".quibbler-messages.txt", f".quibbler-{self.session_id}.txt"
         )
 
         options = ClaudeAgentOptions(
@@ -53,6 +80,7 @@ class Quibbler:
             system_prompt=updated_prompt,
             allowed_tools=["Read", "Write"],
             permission_mode="acceptEdits",
+            model=_config.model,
             hooks={},
             mcp_servers={},
         )
@@ -60,6 +88,7 @@ class Quibbler:
         self.client = ClaudeSDKClient(options=options)
         await self.client.__aenter__()
         self.task = asyncio.create_task(self._run())
+        logger.info(f"Started quibbler with model: {_config.model}")
 
     async def stop(self) -> None:
         """Stop the quibbler agent"""
@@ -79,7 +108,7 @@ class Quibbler:
         self.queue.put_nowait(evt)
 
     async def _run(self) -> None:
-        """Main quibbler loop - processes batched events"""
+        """Main quibbler loop - processes events one at a time"""
         # Send startup message
         await self.client.query(
             "Quibbler session started. Watch the events and intervene when necessary. Build understanding in your head."
@@ -88,40 +117,18 @@ class Quibbler:
         async for chunk in self.client.receive_response():
             logger.info("startup> %s", chunk)
 
-        # Process events in batches
+        # Process events one at a time
         while True:
-            # Collect batch of events
-            batch = []
+            # Get event (blocking)
+            evt = await self.queue.get()
 
-            # Get first event (blocking)
-            first_event = await self.queue.get()
-            batch.append(first_event)
-            batch_start = asyncio.get_event_loop().time()
-
-            # Collect more events with timeout
-            while True:
-                batch_age = asyncio.get_event_loop().time() - batch_start
-
-                # Stop if batch is full or too old
-                if len(batch) >= MAX_BATCH_SIZE or batch_age >= MAX_BATCH_WAIT:
-                    break
-
-                # Try to get more events (with timeout)
-                try:
-                    evt = await asyncio.wait_for(self.queue.get(), timeout=BATCH_WAIT_TIME)
-                    batch.append(evt)
-                except asyncio.TimeoutError:
-                    break
-
-            # Format all events and send as one message
             try:
-                prompts = [format_event_for_agent(evt) for evt in batch]
-                combined_prompt = "\n\n---\n\n".join(prompts)
+                # Format event and send
+                prompt = format_event_for_agent(evt)
 
-                await self.client.query(combined_prompt)
+                await self.client.query(prompt)
                 async for chunk in self.client.receive_response():
-                    logger.info("batch[%d]> %s", len(batch), chunk)
+                    logger.info("event> %s", chunk)
             finally:
-                # Mark all events as done
-                for _ in batch:
-                    self.queue.task_done()
+                # Mark event as done
+                self.queue.task_done()

@@ -1,9 +1,10 @@
 """Prompt templates for the quibbler agent"""
 
 from pathlib import Path
-import logging
 
-logger = logging.getLogger(__name__)
+from quibbler.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Shared quibbler prompt - core quality enforcement guidance
 SHARED_CRITIC_PROMPT = """## Your Mindset

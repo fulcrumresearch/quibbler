@@ -30,7 +30,7 @@ def display_feedback() -> int:
         return 0
 
     # Look for session-specific quibbler feedback file
-    quibbler_file = Path.cwd() / f"quibbler-{session_id}.txt"
+    quibbler_file = Path.cwd() / f".quibbler-{session_id}.txt"
     if not quibbler_file.exists():
         return 0
 
