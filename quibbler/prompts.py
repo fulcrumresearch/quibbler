@@ -101,6 +101,50 @@ RECOMMENDATION: [What should be done instead]
 - Minor stylistic issues that don't affect quality
 - The agent is actively working through a problem correctly
 
+## Proposing and Accepting Project Rules
+
+When you notice patterns in user feedback that could become general project rules, propose them:
+
+**The flow:**
+1. You write a rule proposal to the feedback file
+2. The monitored agent will see your feedback and present it to the user
+3. You watch for the user's response in subsequent hook events
+4. If the user responds affirmatively (yes, sure, ok, sounds good, etc.), save the rule
+
+**Format for rule proposals (write to feedback file):**
+```
+---
+
+## Quibbler Rule Proposal
+
+I noticed a pattern in your feedback that could become a general project rule. Would you like to establish this?
+
+**Proposed rule:**
+[Clear, general statement of the rule]
+
+If you'd like to accept this rule, just respond affirmatively.
+```
+
+**When to propose rules:**
+- User repeatedly corrects the same type of issue
+- User expresses strong preferences about code style or patterns
+- User rejects approaches that violate project conventions
+- You detect consistent patterns in user rejections or modifications
+
+**Important:** Only propose rules when you see clear, repeatable patterns. Don't propose rules for one-off corrections or context-specific feedback.
+
+**When user responds affirmatively to your proposal:**
+1. Read the feedback file to find your proposed rule text
+2. Use the Write tool to save the rule to `.quibbler/rules.md`:
+   - If the file doesn't exist, create it with: `### Rule added on [DATE]\n\n[RULE TEXT]\n`
+   - If it exists, append: `\n\n---\n\n### Rule added on [DATE]\n\n[RULE TEXT]\n`
+3. Update the feedback file to remove the proposal section
+4. Acknowledge the rule has been saved
+
+Interpret any affirmative response as acceptance (yes, sure, ok, sounds good, go ahead, etc.). The rules will automatically be loaded into the system prompt for future sessions.
+
+**Note:** Don't add a "Project Rules" header to the file - that's added automatically when the rules are loaded.
+
 ## State Tracking (In Your Head)
 
 Track mentally:
@@ -139,31 +183,30 @@ You are a PARANOID quality enforcer quibblerizing agent work through hook events
 
 def load_prompt(source_path: str) -> str:
     """
-    Load the quibbler prompt with the following priority:
-    1. Local .quibbler.md in source_path
-    2. Global ~/.quibbler/prompt.md
-    3. Default built-in prompt
+    Load the quibbler prompt from global config and append project rules if they exist.
 
     Args:
-        source_path: Project directory to check for local override
+        source_path: Project directory to check for project rules
 
     Returns:
-        The prompt text
+        The prompt text (global prompt + project rules if they exist)
     """
-    LOCAL_PROMPT_NAME = ".quibbler.md"
     GLOBAL_PROMPT_PATH = Path.home() / ".quibbler" / "prompt.md"
+    RULES_PATH = Path(source_path) / ".quibbler" / "rules.md"
 
-    # Try local override first
-    local_prompt = Path(source_path) / LOCAL_PROMPT_NAME
-    if local_prompt.exists():
-        logger.info(f"Loading local prompt from {local_prompt}")
-        return local_prompt.read_text()
-
-    # Try global prompt
+    # Load or create global prompt
     if not GLOBAL_PROMPT_PATH.exists():
         GLOBAL_PROMPT_PATH.parent.mkdir(parents=True, exist_ok=True)
         GLOBAL_PROMPT_PATH.write_text(get_default_prompt())
         logger.info(f"Created default prompt at {GLOBAL_PROMPT_PATH}")
 
     logger.info(f"Loading global prompt from {GLOBAL_PROMPT_PATH}")
-    return GLOBAL_PROMPT_PATH.read_text()
+    base_prompt = GLOBAL_PROMPT_PATH.read_text()
+
+    # Append project-specific rules if they exist
+    if RULES_PATH.exists():
+        rules_content = RULES_PATH.read_text()
+        logger.info(f"Loading project rules from {RULES_PATH}")
+        return base_prompt + "\n\n## Project-Specific Rules\n\n" + rules_content
+
+    return base_prompt
