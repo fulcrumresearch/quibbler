@@ -27,10 +27,11 @@ def format_event_for_agent(evt: Dict[str, Any]) -> str:
 
 @dataclass
 class Critic:
-    """Critic agent that writes feedback to .critic-messages.txt"""
+    """Critic agent that writes feedback to critic-$session_id.txt"""
 
     system_prompt: str
     source_path: str
+    session_id: str
 
     client: Optional[ClaudeSDKClient] = field(default=None, init=False)
     queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=1000), init=False)
@@ -41,9 +42,15 @@ class Critic:
         if self.client is not None:
             return
 
+        # Update system prompt with session-specific filename
+        updated_prompt = self.system_prompt.replace(
+            ".critic-messages.txt",
+            f"critic-{self.session_id}.txt"
+        )
+
         options = ClaudeAgentOptions(
             cwd=self.source_path,
-            system_prompt=self.system_prompt,
+            system_prompt=updated_prompt,
             allowed_tools=["Read", "Write"],
             permission_mode="acceptEdits",
             hooks={},

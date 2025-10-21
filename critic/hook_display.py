@@ -3,25 +3,35 @@
 Display hook for critic feedback.
 
 This script:
-1. Checks if .critic-messages.txt exists in the current working directory
-2. If exists: reads contents, prints to stderr, deletes file
-3. If not exists: exits silently
+1. Reads hook event JSON from stdin to extract session_id
+2. Checks if critic-$session_id.txt exists in the current working directory
+3. If exists: reads contents, prints to stderr, deletes file
+4. If not exists: exits silently
 
 This is designed to be called as a hook to display critic feedback to the agent.
 Output to stderr ensures the feedback is visible in the agent's context.
 """
 
 import sys
+import json
 from pathlib import Path
 
 
 def display_feedback() -> int:
     """Display critic feedback to the agent"""
-    # Look for critic feedback file in current working directory
-    critic_file = Path.cwd() / ".critic-messages.txt"
+    # Read hook event from stdin to extract session_id
+    hook_input = sys.stdin.read().strip()
+    if not hook_input:
+        return 0
 
+    hook_event = json.loads(hook_input)
+    session_id = hook_event.get("session_id")
+    if not session_id:
+        return 0
+
+    # Look for session-specific critic feedback file
+    critic_file = Path.cwd() / f"critic-{session_id}.txt"
     if not critic_file.exists():
-        # No feedback to display - exit silently
         return 0
 
     # Read the critic feedback

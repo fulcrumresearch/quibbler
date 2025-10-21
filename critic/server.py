@@ -41,6 +41,7 @@ async def get_or_create_critic(session_id: str, source_path: str) -> Critic:
         critic = Critic(
             system_prompt=system_prompt,
             source_path=source_path,
+            session_id=session_id,
         )
         await critic.start()
         _critics[session_id] = critic
@@ -103,6 +104,6 @@ def run_server(port: int = 8081):
 
     logger.info(f"Starting Critic Server on port {port}")
     logger.info(f"Hook endpoint: http://0.0.0.0:{port}/hook/{{session_id}}")
-    logger.info(f"Feedback written to: .critic-messages.txt")
+    logger.info(f"Feedback written to: critic-{{session_id}}.txt")
 
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
