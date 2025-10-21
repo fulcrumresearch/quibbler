@@ -35,8 +35,7 @@ _quibblers: Dict[str, Quibbler] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for startup and shutdown events"""
-    # Startup: nothing to do
+    """Lifespan context manager for startup and shutdown"""
     yield
     # Shutdown: clean up all quibblers
     for sid, c in list(_quibblers.items()):
@@ -87,6 +86,8 @@ async def hook(request: Request, session_id: str) -> Dict[str, str]:
         raise HTTPException(status_code=400, detail="session_id is required")
 
     source_path = data.get("source_path")
+    if not source_path:
+        raise HTTPException(status_code=400, detail="source_path is required")
 
     # Create clean event with received timestamp
     evt = {
