@@ -1,15 +1,15 @@
 # Quibbler
 
 
-`quibbler` is a background agent that monitors your claude code and interrupts it with feedback when it is acting poorly. 
+Quibbler is a background agent that monitors and critiques your coding agent’s actions using hooks. Unlike most critics and guardrails, Quibbler is an agent: it can read and understand the context of an agent’s action to see if it made a mistake.
 
-It can help you automatically squash behaviors like:
+We’ve found Quibbler useful in preventing agents from
 
-- not actually running tests, lying about things
-- not following previously defined user instructions
-- custom defined rules, like using gnarly try/except blocks, not using uv, doing weird imagined backwards compatibility work.
+- fabricating results without running commands
+- not running tests
+- not following your coding style
 
-It will also automatically detect patterns in your refusal and save them as rules for its own monitoring. 
+In longer running tasks, we found Quibbler useful in enforcing intent, allowing us to check in on our agent less. You can configure your guardrails, and Quibbler learns from your usage. Quibbler currently supports Claude Code: we are adding support for other agents soon!
 
 ## Installation
 
@@ -39,12 +39,16 @@ Then just start claude code! Start coding and it will run in the background and 
 
 ## Configuration
 
-### Model Selection
-
 By default, quibbler uses Claude Haiku 4.5 for speed - you can change this by creating or editing `~/.quibbler/config.json`:
 
 ```json
 {
-  "model": "claude-3-5-sonnet-20241022"
+  "model": {anthropic model name}
 }
 ```
+
+## Contributing
+.
+If you notice an issue or bug, please [open an issue](https://github.com/fulcrumresearch/quibbler/issues). We also welcome contributions: feel free to open a PR to fix an issue.
+
+You can join the user community to discuss issues and workflows you find useful, on [discord](https://discord.gg/QmMybVuwWp).
