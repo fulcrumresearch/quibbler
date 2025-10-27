@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.117.1",
     "uvicorn>=0.37.0",
     "requests>=2.30.0",
+    "mcp[cli]>=1.18.0",
 ]
 
 [project.scripts]
