@@ -1,17 +1,18 @@
 """Quibbler agent for code review"""
 
-from contextlib import suppress
-from dataclasses import dataclass, field
-from claude_agent_sdk import (
-    ClaudeAgentOptions,
-    ClaudeSDKClient,
-    AssistantMessage,
-    TextBlock,
-)
-from typing import Optional
 import asyncio
 import json
+from contextlib import suppress
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
+
+from claude_agent_sdk import (
+    AssistantMessage,
+    ClaudeAgentOptions,
+    ClaudeSDKClient,
+    TextBlock,
+)
 
 from quibbler.logger import get_logger
 

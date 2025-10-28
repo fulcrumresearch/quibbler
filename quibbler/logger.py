@@ -1,6 +1,6 @@
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Create ~/.quibbler directory if it doesn't exist
 LOG_DIR = Path.home() / ".quibbler"

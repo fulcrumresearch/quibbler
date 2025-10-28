@@ -11,16 +11,16 @@ The MCP client spawns this server automatically via stdio.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 from quibbler.agent import Quibbler
-from quibbler.prompts import load_prompt
 from quibbler.logger import get_logger
+from quibbler.prompts import load_prompt
 
 logger = get_logger(__name__)
 
