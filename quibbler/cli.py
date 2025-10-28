@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Quibbler CLI - Main command-line interface"""
 
-from quibbler.server import run_server
+from quibbler.mcp_server import run_server
 
 
 def main():
