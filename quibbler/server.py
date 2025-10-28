@@ -11,14 +11,13 @@ The MCP client spawns this server automatically via stdio.
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from typing import Any, Dict
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from quibbler.agent import Quibbler
+from quibbler.agent import Quibbler, _config
 from quibbler.logger import get_logger
 from quibbler.prompts import load_prompt
 
@@ -37,12 +36,10 @@ async def get_or_create_quibbler(project_path: str) -> Quibbler:
 
     if quibbler is None:
         system_prompt = load_prompt(project_path)
-        # Use project path as session_id for now
-        session_id = Path(project_path).name
         quibbler = Quibbler(
             system_prompt=system_prompt,
             source_path=project_path,
-            session_id=session_id,
+            model=_config.model,
         )
         await quibbler.start()
         _quibblers[project_path] = quibbler

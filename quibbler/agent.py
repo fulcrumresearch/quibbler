@@ -52,7 +52,6 @@ class Quibbler:
 
     system_prompt: str
     source_path: str
-    session_id: str
     model: str = DEFAULT_MODEL
 
     queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(), init=False)
