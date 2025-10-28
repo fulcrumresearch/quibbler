@@ -1,14 +1,11 @@
 [project]
 name = "quibbler"
 version = "0.1.5"
-description = "AI monitoring for Claude Code agents"
+description = "Code review agent for AI coding assistants via MCP"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "claude-agent-sdk>=0.1.0",
-    "fastapi>=0.117.1",
-    "uvicorn>=0.37.0",
-    "requests>=2.30.0",
     "mcp[cli]>=1.18.0",
 ]
 
