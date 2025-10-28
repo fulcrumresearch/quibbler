@@ -17,7 +17,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from quibbler.agent import Quibbler, _config
+from quibbler.agent import Quibbler, load_config
 from quibbler.logger import get_logger
 from quibbler.prompts import load_prompt
 
@@ -36,10 +36,11 @@ async def get_or_create_quibbler(project_path: str) -> Quibbler:
 
     if quibbler is None:
         system_prompt = load_prompt(project_path)
+        config = load_config(project_path)
         quibbler = Quibbler(
             system_prompt=system_prompt,
             source_path=project_path,
-            model=_config.model,
+            model=config.model,
         )
         await quibbler.start()
         _quibblers[project_path] = quibbler

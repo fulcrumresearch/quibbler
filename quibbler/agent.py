@@ -28,22 +28,50 @@ class QuibblerConfig:
     model: str = DEFAULT_MODEL
 
 
-def load_config() -> QuibblerConfig:
-    """Load config from ~/.quibbler/config.json"""
-    config_file = Path.home() / ".quibbler" / "config.json"
+def load_config(source_path: str) -> QuibblerConfig:
+    """
+    Load config with project override support.
 
-    if config_file.exists():
+    Checks for config in this order:
+    1. Project-specific: {source_path}/.quibbler/config.json
+    2. Global: ~/.quibbler/config.json
+    3. Default: DEFAULT_MODEL
+
+    Args:
+        source_path: Project directory to check for project-specific config
+
+    Returns:
+        QuibblerConfig with the loaded or default model setting
+    """
+    # Check project-specific config first
+    project_config = Path(source_path) / ".quibbler" / "config.json"
+    if project_config.exists():
         try:
-            with open(config_file) as f:
+            with open(project_config) as f:
                 data = json.load(f)
-                return QuibblerConfig(model=data.get("model", DEFAULT_MODEL))
+                model = data.get("model", DEFAULT_MODEL)
+                logger.info(
+                    f"Loaded project config from {project_config}: model={model}"
+                )
+                return QuibblerConfig(model=model)
         except Exception as e:
-            logger.warning(f"Failed to load config: {e}")
+            logger.warning(f"Failed to load project config from {project_config}: {e}")
 
+    # Fall back to global config
+    global_config = Path.home() / ".quibbler" / "config.json"
+    if global_config.exists():
+        try:
+            with open(global_config) as f:
+                data = json.load(f)
+                model = data.get("model", DEFAULT_MODEL)
+                logger.info(f"Loaded global config from {global_config}: model={model}")
+                return QuibblerConfig(model=model)
+        except Exception as e:
+            logger.warning(f"Failed to load global config from {global_config}: {e}")
+
+    # Return default
+    logger.info(f"No config found, using default model: {DEFAULT_MODEL}")
     return QuibblerConfig(model=DEFAULT_MODEL)
-
-
-_config = load_config()
 
 
 @dataclass
