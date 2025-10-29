@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "claude-agent-sdk>=0.1.0",
+    "fastapi>=0.120.1",
     "mcp[cli]>=1.18.0",
+    "requests>=2.32.5",
+    "uvicorn>=0.38.0",
 ]
 
 [project.scripts]
