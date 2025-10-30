@@ -19,39 +19,35 @@ Quibbler maintains context across reviews, learning your project's patterns and 
 
 ## Installation
 
-Using pip:
-
-```bash
-pip install quibbler
-```
-
 Using uv:
 
 ```bash
 uv tool install quibbler
 ```
 
+Using pip:
+
+```bash
+pip install quibbler
+```
+
 ## Choosing Your Mode
 
 Quibbler supports two integration modes:
 
-### MCP Mode (Recommended for Most Users)
-
-Best for: **Cursor, Claude Desktop, and other MCP-compatible agents**
-
-- Uses the Model Context Protocol for universal compatibility
-- Agent calls `review_code` tool before making changes
-- Synchronous review with blocking feedback
-- Simple setup via MCP server configuration
-
-### Hook Mode (For Claude Code Power Users)
-
-Best for: **Claude Code users wanting deeper integration**
+### Hook Mode (For Claude Code users)
 
 - Uses Claude Code's hook system for event-driven monitoring
 - Passively observes all agent actions (tool use, prompts, etc.)
 - Fire-and-forget feedback injection via file writes
 - More powerful affordances but Claude Code-specific
+
+### MCP Mode (For users of all other coding agents)
+
+- Uses the Model Context Protocol for universal compatibility
+- Agent calls `review_code` tool before making changes
+- Synchronous review with blocking feedback
+- Simple setup via MCP server configuration
 
 ## Setup
 
@@ -62,21 +58,6 @@ Choose your mode and follow the appropriate setup instructions:
 #### 1. Configure MCP Server
 
 Add Quibbler to your agent's MCP server configuration.
-
-**For Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "quibbler": {
-      "command": "quibbler mcp",
-      "env": {
-        "ANTHROPIC_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
 
 **For Cursor** (`.cursor/mcp.json`):
 
@@ -102,32 +83,30 @@ Create or update `AGENTS.md` in your project root to instruct your agent to use 
 ```markdown
 ## Code Review Process
 
-Before writing, editing, or running any code, you MUST call the `review_code` tool from the Quibbler MCP server with:
+After making code changes, you MUST call the `review_code` tool from the Quibbler MCP server with:
 
 - `user_instructions`: The exact instructions the user gave you
-- `agent_plan`: **The specific code changes you plan to make** (not just a general description - include file names, function signatures, key logic, and implementation details)
+- `agent_plan`: **A summary of the specific changes you made** (include which files were modified, what was added/changed, and key implementation details)
 - `project_path`: The absolute path to this project
 
-Wait for Quibbler's feedback before proceeding. Only proceed if Quibbler approves or address any concerns raised.
+Review Quibbler's feedback and address any issues or concerns raised.
 
 ### Example
 
-User asks: "Add authentication to the API"
+User asks: "Add logging to the API endpoints"
 
-Before writing code, call:
+After implementing, call:
 
 review_code(
-user_instructions="Add authentication to the API",
-agent_plan="""I plan to make these specific changes:
+user_instructions="Add logging to the API endpoints",
+agent_plan="""Changes made:
 
-1. Create auth/jwt.py with verify_token() and create_token() functions
-2. Add JWT middleware to routes/api.py with @require_auth decorator
-3. Update User model with password_hash field and verify_password() method
-4. Create /auth/login endpoint in routes/auth.py""",
+1. Added logger configuration in config/logging.py
+2. Updated routes/api.py to log incoming requests and responses
+3. Added request_id middleware for tracing
+4. Created logs/ directory with .gitignore""",
    project_path="/absolute/path/to/project"
    )
-
-Wait for approval before implementing.
 ```
 
 ### Option B: Hook Mode Setup
@@ -174,7 +153,7 @@ By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by cre
 
 ```json
 {
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-5"
 }
 ```
 
@@ -182,7 +161,7 @@ By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by cre
 
 ```json
 {
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-5"
 }
 ```
 
@@ -220,10 +199,10 @@ You can customize Quibbler's system prompt by editing `~/.quibbler/prompt.md`. T
 
 Project-specific rules in `.quibbler/rules.md` are automatically loaded and added to the prompt.
 
-**Note for Hook Mode**: Your system prompt should include a `{message_file}` placeholder where you want Quibbler to write feedback. For example:
+**Note for Hook Mode**: Quibbler writes feedback to a message file that is intended for the agent to read and act on (though users have oversight and can see it). Your agent's system prompt should include a `{message_file}` placeholder to tell Quibbler where to write its feedback. For example:
 
 ```markdown
-When you need to intervene, write your feedback to {message_file}
+When you need to provide feedback to the agent, write it to {message_file}. This is agent-to-agent communication intended for the coding agent to read and act on.
 ```
 
 ## Contributing
