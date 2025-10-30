@@ -23,14 +23,14 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 
-from quibbler.agent import Quibbler, load_config
+from quibbler.agent import QuibblerHook, load_config
 from quibbler.prompts import load_prompt
 from quibbler.logger import get_logger
 
 logger = get_logger(__name__)
 
-# session_id -> Quibbler
-_quibblers: dict[str, Quibbler] = {}
+# session_id -> QuibblerHook
+_quibblers: dict[str, QuibblerHook] = {}
 
 
 @asynccontextmanager
@@ -46,18 +46,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Quibbler Server", version="1.0", lifespan=lifespan)
 
 
-async def get_or_create_quibbler(session_id: str, source_path: str) -> Quibbler:
+async def get_or_create_quibbler(session_id: str, source_path: str) -> QuibblerHook:
     """Get or create a quibbler for a session"""
     quibbler = _quibblers.get(session_id)
 
     if quibbler is None:
         system_prompt = load_prompt(source_path, mode="hook")
         config = load_config(source_path)
-        quibbler = Quibbler(
+        quibbler = QuibblerHook(
             system_prompt=system_prompt,
             source_path=source_path,
             model=config.model,
-            mode="hook",
             session_id=session_id,
         )
         await quibbler.start()

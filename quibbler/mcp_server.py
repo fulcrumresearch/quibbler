@@ -16,7 +16,7 @@ from textwrap import dedent
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
-from quibbler.agent import Quibbler, load_config
+from quibbler.agent import QuibblerMCP, load_config
 from quibbler.logger import get_logger
 from quibbler.prompts import load_prompt
 
@@ -24,25 +24,24 @@ from quibbler.prompts import load_prompt
 logger = get_logger(__name__)
 
 
-# project_path -> Quibbler
-_quibblers: dict[str, Quibbler] = {}
+# project_path -> QuibblerMCP
+_quibblers: dict[str, QuibblerMCP] = {}
 
 
 app = Server("quibbler")
 
 
-async def get_or_create_quibbler(project_path: str) -> Quibbler:
+async def get_or_create_quibbler(project_path: str) -> QuibblerMCP:
     """Get or create a quibbler agent for a project"""
     quibbler = _quibblers.get(project_path)
 
     if quibbler is None:
         system_prompt = load_prompt(project_path, mode="mcp")
         config = load_config(project_path)
-        quibbler = Quibbler(
+        quibbler = QuibblerMCP(
             system_prompt=system_prompt,
             source_path=project_path,
             model=config.model,
-            mode="mcp",
         )
         await quibbler.start()
         _quibblers[project_path] = quibbler

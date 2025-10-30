@@ -88,13 +88,11 @@ def load_config(source_path: str) -> QuibblerConfig:
 
 @dataclass
 class Quibbler:
-    """Quibbler agent that reviews code changes and maintains context"""
+    """Base class for Quibbler agents that review code changes and maintain context"""
 
     system_prompt: str
     source_path: str
     model: str = DEFAULT_MODEL
-    mode: str = "mcp"  # "mcp" or "hook"
-    session_id: str | None = None  # Required for hook mode
 
     queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(), init=False)
     task: asyncio.Task | None = field(default=None, init=False)
@@ -116,47 +114,9 @@ class Quibbler:
             await self.task
         self.task = None
 
-    async def review(self, review_request: str) -> str:
-        """
-        Submit a review request and wait for feedback (MCP mode).
-
-        Args:
-            review_request: The formatted review request with user instructions and agent plan
-
-        Returns:
-            The quibbler's feedback as a string
-        """
-        # Create a future to receive the response
-        response_future = asyncio.Future()
-
-        # Enqueue the request with its response future
-        await self.queue.put((review_request, response_future))
-
-        # Wait for the agent to process and respond
-        feedback = await response_future
-
-        return feedback
-
-    async def enqueue(self, evt: dict[str, Any]) -> None:
-        """
-        Add a hook event to the processing queue (hook mode).
-
-        Args:
-            evt: The hook event dictionary to process
-        """
-        await self.queue.put(evt)
-
     def _prepare_system_prompt(self) -> str:
-        """Prepare system prompt based on mode"""
-        if self.mode == "hook":
-            if self.session_id is None:
-                raise ValueError("session_id is required for hook mode")
-            quibbler_dir = Path(self.source_path) / ".quibbler"
-            message_file = str(quibbler_dir / f"{self.session_id}.txt")
-            logger.info(f"Hook mode: feedback file = {message_file}")
-            return self.system_prompt.format(message_file=message_file)
-        else:
-            return self.system_prompt
+        """Prepare system prompt - subclasses can override for custom behavior"""
+        return self.system_prompt
 
     async def _query_and_collect_text(
         self, client: ClaudeSDKClient, prompt: str
@@ -196,55 +156,20 @@ class Quibbler:
             logger.info("event> FULL MESSAGE: %s", str(message)[:1000])
 
     async def _send_startup_message(self, client: ClaudeSDKClient) -> None:
-        """Send mode-appropriate startup message"""
-        if self.mode == "hook":
-            startup_msg = (
-                "Quibbler session started. Watch the events and intervene when necessary. "
-                "Build understanding in your head."
-            )
-        else:
-            startup_msg = (
-                "Quibbler session started. You will receive code review requests AFTER changes have been made. "
-                "For each request, analyze the user's intent and the agent's completed changes. "
-                "Provide concise, actionable feedback or approval. Build understanding of the codebase over time."
-            )
+        """Send startup message - subclasses must override"""
+        raise NotImplementedError("Subclasses must implement _send_startup_message")
 
-        await client.query(startup_msg)
-        async for message in client.receive_response():
-            logger.info("startup> type=%s", type(message).__name__)
-
-    async def _run_mcp_mode(self, client: ClaudeSDKClient) -> None:
-        """Process MCP review requests (synchronous responses)"""
-        while True:
-            review_request, response_future = await self.queue.get()
-            try:
-                feedback = await self._query_and_collect_text(client, review_request)
-                response_future.set_result(feedback)
-            except Exception as e:
-                logger.error(f"Error processing review request: {e}")
-                response_future.set_exception(e)
-            finally:
-                self.queue.task_done()
-
-    async def _run_hook_mode(self, client: ClaudeSDKClient) -> None:
-        """Process hook events (fire-and-forget)"""
-        while True:
-            evt = await self.queue.get()
-            try:
-                prompt = format_event_for_agent(evt)
-                await self._query_and_consume(client, prompt)
-            except Exception as e:
-                logger.error(f"Error processing hook event: {e}")
-            finally:
-                self.queue.task_done()
+    async def _run_loop(self, client: ClaudeSDKClient) -> None:
+        """Run the main processing loop - subclasses must override"""
+        raise NotImplementedError("Subclasses must implement _run_loop")
 
     async def _run(self) -> None:
-        """Main quibbler loop - dispatches to mode-specific runner"""
+        """Main quibbler loop - shared infrastructure"""
         # Create .quibbler directory
         quibbler_dir = Path(self.source_path) / ".quibbler"
         quibbler_dir.mkdir(exist_ok=True)
 
-        # Prepare system prompt based on mode
+        # Prepare system prompt
         system_prompt = self._prepare_system_prompt()
         logger.info(f"Prepared system prompt preview: {system_prompt[:200]}...")
 
@@ -263,14 +188,108 @@ class Quibbler:
                 # Send startup message
                 await self._send_startup_message(client)
 
-                # Dispatch to mode-specific loop
-                if self.mode == "hook":
-                    await self._run_hook_mode(client)
-                else:
-                    await self._run_mcp_mode(client)
+                # Run the mode-specific loop
+                await self._run_loop(client)
 
         except asyncio.CancelledError:
             # Normal shutdown - task was cancelled
             raise
         except Exception:
             logger.exception("Quibbler runner crashed")
+
+
+@dataclass
+class QuibblerMCP(Quibbler):
+    """Quibbler agent for MCP mode - provides synchronous review responses"""
+
+    async def review(self, review_request: str) -> str:
+        """
+        Submit a review request and wait for feedback.
+
+        Args:
+            review_request: The formatted review request with user instructions and agent plan
+
+        Returns:
+            The quibbler's feedback as a string
+        """
+        # Create a future to receive the response
+        response_future = asyncio.Future()
+
+        # Enqueue the request with its response future
+        await self.queue.put((review_request, response_future))
+
+        # Wait for the agent to process and respond
+        feedback = await response_future
+
+        return feedback
+
+    async def _send_startup_message(self, client: ClaudeSDKClient) -> None:
+        """Send MCP-specific startup message"""
+        startup_msg = (
+            "Quibbler session started. You will receive code review requests AFTER changes have been made. "
+            "For each request, analyze the user's intent and the agent's completed changes. "
+            "Provide concise, actionable feedback or approval. Build understanding of the codebase over time."
+        )
+
+        await client.query(startup_msg)
+        async for message in client.receive_response():
+            logger.info("startup> type=%s", type(message).__name__)
+
+    async def _run_loop(self, client: ClaudeSDKClient) -> None:
+        """Process MCP review requests (synchronous responses)"""
+        while True:
+            review_request, response_future = await self.queue.get()
+            try:
+                feedback = await self._query_and_collect_text(client, review_request)
+                response_future.set_result(feedback)
+            except Exception as e:
+                logger.error(f"Error processing review request: {e}")
+                response_future.set_exception(e)
+            finally:
+                self.queue.task_done()
+
+
+@dataclass
+class QuibblerHook(Quibbler):
+    """Quibbler agent for hook mode - processes events asynchronously"""
+
+    session_id: str
+
+    async def enqueue(self, evt: dict[str, Any]) -> None:
+        """
+        Add a hook event to the processing queue.
+
+        Args:
+            evt: The hook event dictionary to process
+        """
+        await self.queue.put(evt)
+
+    def _prepare_system_prompt(self) -> str:
+        """Prepare system prompt with message file path"""
+        quibbler_dir = Path(self.source_path) / ".quibbler"
+        message_file = str(quibbler_dir / f"{self.session_id}.txt")
+        logger.info(f"Hook mode: feedback file = {message_file}")
+        return self.system_prompt.format(message_file=message_file)
+
+    async def _send_startup_message(self, client: ClaudeSDKClient) -> None:
+        """Send hook-specific startup message"""
+        startup_msg = (
+            "Quibbler session started. Watch the events and intervene when necessary. "
+            "Build understanding in your head."
+        )
+
+        await client.query(startup_msg)
+        async for message in client.receive_response():
+            logger.info("startup> type=%s", type(message).__name__)
+
+    async def _run_loop(self, client: ClaudeSDKClient) -> None:
+        """Process hook events (fire-and-forget)"""
+        while True:
+            evt = await self.queue.get()
+            try:
+                prompt = format_event_for_agent(evt)
+                await self._query_and_consume(client, prompt)
+            except Exception as e:
+                logger.error(f"Error processing hook event: {e}")
+            finally:
+                self.queue.task_done()
