@@ -1,36 +1,39 @@
 import logging
-from datetime import datetime
 from pathlib import Path
 
-# Create ~/.quibbler directory if it doesn't exist
-LOG_DIR = Path.home() / ".quibbler"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+LOG_DIR = Path.home() / ".quibbler"
 LOG_FILE = LOG_DIR / "quibbler.log"
 
 
-def get_logger(name: str) -> logging.Logger:
-    """Get a logger instance with proper configuration"""
+def create_log_dir() -> None:
+    """Create log directory idempotently."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    """Get a logger instance with name `name`."""
+
+    # ensure log directory exists
+    create_log_dir()
+
+    # get logger instance
     logger = logging.getLogger(name)
 
-    if not logger.handlers:  # Avoid adding duplicate handlers
-        logger.setLevel(logging.DEBUG)
+    # if logger already has handlers, return it
+    if logger.handlers:
+        return logger
 
-        # File handler
-        file_handler = logging.FileHandler(LOG_FILE)
-        file_handler.setLevel(logging.DEBUG)
-
-        # Format
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        file_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
+    # otherwise, configure logger
+    logger.setLevel(level)
+    logger.propagate = False  # avoid duplicate logs from parent loggers
+    file_handler = logging.FileHandler(LOG_FILE)
+    file_handler.setLevel(level)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
     return logger
-
-
-logger = get_logger(__name__)
-logger.info(f"Logging initialized at {datetime.now()}")
