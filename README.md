@@ -6,7 +6,7 @@ Unlike simple linters or static analysis tools, Quibbler is an agent: it can rea
 
 ## Demo
 
-![demo](https://github.com/fulcrumresearch/quibbler/releases/download/v0.2.0/demo.mp4)
+https://github.com/user-attachments/assets/7100d7a4-005b-42fb-ad20-00ea6ae241fe
 
 ## What Quibbler Prevents
 
