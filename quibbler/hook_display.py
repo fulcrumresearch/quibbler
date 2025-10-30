@@ -12,8 +12,8 @@ This is designed to be called as a hook to display quibbler feedback to the agen
 Output to stderr ensures the feedback is visible in the agent's context.
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 

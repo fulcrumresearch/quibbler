@@ -11,7 +11,10 @@ from urllib.parse import quote
 
 import requests
 
-from quibbler.logger import logger
+from quibbler.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 def forward_hook() -> int:
