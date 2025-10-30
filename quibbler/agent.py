@@ -6,7 +6,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from claude_agent_sdk import (
     AssistantMessage,
@@ -17,12 +17,14 @@ from claude_agent_sdk import (
 
 from quibbler.logger import get_logger
 
-logger = get_logger(__name__)
 
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 
-def format_event_for_agent(evt: Dict[str, Any]) -> str:
+logger = get_logger(__name__)
+
+
+def format_event_for_agent(evt: dict[str, Any]) -> str:
     """Format hook event for the quibbler agent"""
     event_type = evt.get("event", "UnknownEvent")
     ts = evt.get("received_at", datetime.now(timezone.utc).isoformat())
@@ -92,10 +94,10 @@ class Quibbler:
     source_path: str
     model: str = DEFAULT_MODEL
     mode: str = "mcp"  # "mcp" or "hook"
-    session_id: Optional[str] = None  # Required for hook mode
+    session_id: str | None = None  # Required for hook mode
 
     queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(), init=False)
-    task: Optional[asyncio.Task] = field(default=None, init=False)
+    task: asyncio.Task | None = field(default=None, init=False)
 
     async def start(self) -> None:
         """Start the quibbler agent background task"""
@@ -135,7 +137,7 @@ class Quibbler:
 
         return feedback
 
-    async def enqueue(self, evt: Dict[str, Any]) -> None:
+    async def enqueue(self, evt: dict[str, Any]) -> None:
         """
         Add a hook event to the processing queue (hook mode).
 
@@ -244,6 +246,7 @@ class Quibbler:
 
         # Prepare system prompt based on mode
         system_prompt = self._prepare_system_prompt()
+        logger.info(f"Prepared system prompt preview: {system_prompt[:200]}...")
 
         options = ClaudeAgentOptions(
             cwd=self.source_path,

@@ -18,7 +18,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -30,7 +30,7 @@ from quibbler.logger import get_logger
 logger = get_logger(__name__)
 
 # session_id -> Quibbler
-_quibblers: Dict[str, Quibbler] = {}
+_quibblers: dict[str, Quibbler] = {}
 
 
 @asynccontextmanager
@@ -68,7 +68,7 @@ async def get_or_create_quibbler(session_id: str, source_path: str) -> Quibbler:
 
 
 async def _process_event_in_background(
-    session_id: str, source_path: str, evt: Dict[str, Any]
+    session_id: str, source_path: str, evt: dict[str, Any]
 ) -> None:
     """Process event in background without blocking the HTTP response"""
     try:
@@ -79,7 +79,7 @@ async def _process_event_in_background(
 
 
 @app.post("/hook/{session_id}")
-async def hook(request: Request, session_id: str) -> Dict[str, str]:
+async def hook(request: Request, session_id: str) -> dict[str, str]:
     """Receive hook events and route to appropriate quibbler"""
     body = await request.body()
 

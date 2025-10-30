@@ -11,7 +11,7 @@ The MCP client spawns this server automatically via stdio.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict
+from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -24,7 +24,7 @@ from quibbler.prompts import load_prompt
 logger = get_logger(__name__)
 
 # project_path -> Quibbler
-_quibblers: Dict[str, Quibbler] = {}
+_quibblers: dict[str, Quibbler] = {}
 
 # Create MCP server
 app = Server("quibbler")
