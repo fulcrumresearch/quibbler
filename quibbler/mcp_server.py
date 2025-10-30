@@ -11,22 +11,23 @@ The MCP client spawns this server automatically via stdio.
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from textwrap import dedent
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
 
 from quibbler.agent import Quibbler, load_config
 from quibbler.logger import get_logger
 from quibbler.prompts import load_prompt
 
+
 logger = get_logger(__name__)
+
 
 # project_path -> Quibbler
 _quibblers: dict[str, Quibbler] = {}
 
-# Create MCP server
+
 app = Server("quibbler")
 
 
@@ -50,86 +51,57 @@ async def get_or_create_quibbler(project_path: str) -> Quibbler:
     return quibbler
 
 
-@app.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available tools"""
-    return [
-        Tool(
-            name="review_code",
-            description=(
-                "Review proposed code changes before implementation. "
-                "Call this BEFORE writing any code to get feedback from Quibbler. "
-                "Quibbler checks for quality issues, pattern violations, hallucinations, "
-                "and ensures the plan aligns with user intent."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "user_instructions": {
-                        "type": "string",
-                        "description": "The exact instructions the user gave (what they actually asked for)",
-                    },
-                    "agent_plan": {
-                        "type": "string",
-                        "description": (
-                            "The specific code changes you plan to make. "
-                            "Include file names, function signatures, key logic, and implementation details. "
-                            "NOT just a general description - be concrete and detailed."
-                        ),
-                    },
-                    "project_path": {
-                        "type": "string",
-                        "description": "Absolute path to the project directory",
-                    },
-                },
-                "required": ["user_instructions", "agent_plan", "project_path"],
-            },
-        )
-    ]
+@app.tool()
+async def review_code(
+    user_instructions: str,
+    agent_plan: str,
+    project_path: str,
+) -> str:
+    """
+    Review proposed code changes before implementation.
+    Call this BEFORE writing any code to get feedback from Quibbler.
+    Quibbler checks for quality issues, pattern violations, hallucinations, and ensures the plan aligns with user intent.
 
-
-@app.call_tool()
-async def call_tool(name: str, arguments: Any) -> list[TextContent]:
-    """Handle tool calls"""
-    if name != "review_code":
-        raise ValueError(f"Unknown tool: {name}")
-
-    user_instructions = arguments.get("user_instructions")
-    agent_plan = arguments.get("agent_plan")
-    project_path = arguments.get("project_path")
-
-    if not all([user_instructions, agent_plan, project_path]):
-        raise ValueError("Missing required arguments")
-
-    logger.info(f"Review requested for project: {project_path}")
-    logger.info(f"User instructions: {user_instructions[:100]}...")
-    logger.info(f"Agent plan: {agent_plan[:100]}...")
+    Args:
+        user_instructions: The exact instructions the user gave (what they actually asked for)
+        agent_plan: The specific code changes you plan to make. Include file names,
+                   function signatures, key logic, and implementation details.
+                   NOT just a general description - be concrete and detailed.
+        project_path: Absolute path to the project directory
+    """
+    logger.info("Review requested for project: %s", project_path)
+    logger.info("User instructions: %s", user_instructions)
+    logger.info("Agent plan: %s", agent_plan)
 
     # Get or create persistent quibbler for this project
     quibbler = await get_or_create_quibbler(project_path)
 
     # Format review request
-    review_request = f"""## Review Request
+    review_request = dedent(
+        f"""
+        ## Review Request
 
-**User Instructions:**
-{user_instructions}
+        **User Instructions:**
+        {user_instructions}
 
-**Agent's Proposed Changes:**
-{agent_plan}
+        **Agent's Proposed Changes:**
+        {agent_plan}
 
-Please review this plan. Check for:
-- Does it address what the user actually asked for?
-- Any hallucinated claims or assumptions?
-- Pattern violations or inconsistencies?
-- Missing verification steps?
-- Inappropriate shortcuts or mocking?
+        Please review this plan. Check for:
+        - Does it address what the user actually asked for?
+        - Any hallucinated claims or assumptions?
+        - Pattern violations or inconsistencies?
+        - Missing verification steps?
+        - Inappropriate shortcuts or mocking?
 
-Provide concise, actionable feedback or approval."""
+        Provide concise, actionable feedback or approval.
+        """
+    ).strip()
 
     # Enqueue review and wait for feedback
     feedback = await quibbler.review(review_request)
 
-    return [TextContent(type="text", text=feedback)]
+    return feedback
 
 
 async def cleanup():
