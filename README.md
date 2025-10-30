@@ -4,6 +4,10 @@ Quibbler is a code review agent that integrates with AI coding assistants. It re
 
 Unlike simple linters or static analysis tools, Quibbler is an agent: it can read and understand your codebase context to provide intelligent, context-aware feedback.
 
+## Demo
+
+<video src="https://github.com/fulcrumresearch/quibbler/releases/download/v0.2.0/demo.mp4" autoplay muted loop playsinline width="100%"></video>
+
 ## What Quibbler Prevents
 
 We've found Quibbler useful in preventing agents from:
