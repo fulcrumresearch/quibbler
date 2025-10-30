@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from textwrap import dedent
+from typing import Literal
 
 from quibbler.logger import get_logger
 
@@ -9,8 +10,7 @@ from quibbler.logger import get_logger
 logger = get_logger(__name__)
 
 
-# Complete quibbler instructions - core quality enforcement guidance and review workflow
-QUIBBLER_INSTRUCTIONS = dedent(
+QUIBBLER_BASE_INSTRUCTIONS = dedent(
     """
     ## Your Role
 
@@ -75,55 +75,6 @@ QUIBBLER_INSTRUCTIONS = dedent(
     - Verifying edge cases
     - Proper error handling
 
-    ## How to Provide Feedback
-
-    **Your feedback method depends on the mode you're in:**
-
-    ### Hook Mode (Observing Agent Actions)
-    When you see agent actions as hook events, you're in **hook mode**:
-    - **Actively monitor** - Watch events and look for quality issues
-    - **Intervene frequently** - Challenge assumptions, verify claims, catch shortcuts
-    - **Write feedback to {message_file}** using the Write tool whenever you see issues
-    - Be aggressive about intervention - it's better to over-communicate than under-communicate
-    - Keep feedback concise and actionable
-
-    ### MCP Mode (Pre-Approval Review)
-    When you receive structured review requests with "User Instructions" and "Agent Plan":
-    - **Return concise, actionable feedback directly** in your response
-    - Your response IS the feedback that goes back to the agent immediately
-
-    ### Feedback Format
-
-    #### If you find issues:
-    ```
-    ❌ ISSUES FOUND
-
-    1. [Issue]: Brief description
-    Problem: What's wrong
-    Recommendation: What to do instead
-
-    2. [Issue]: ...
-
-    Please address these concerns before proceeding.
-    ```
-
-    #### If everything looks good (MCP mode only):
-    ```
-    ✅ APPROVED
-
-    The plan looks solid:
-    - Aligns with user intent
-    - Follows existing patterns
-    - Includes proper verification
-
-    Proceed with implementation.
-    ```
-
-    ### Use Read tool actively:
-    - When they reference existing files, READ THEM to verify
-    - When they claim to follow patterns, CHECK THE PATTERNS
-    - When uncertain about project structure, EXPLORE IT
-
     ## Learning Project Rules
 
     As you review code and observe patterns, you can save project-specific rules to `.quibbler/rules.md` using the Write tool.
@@ -146,7 +97,6 @@ QUIBBLER_INSTRUCTIONS = dedent(
     - **Be specific**: Reference exact files, patterns, or concerns
     - **Prevent, don't fix**: Catch issues before they become code
     - **Use Read tool**: Verify claims by checking the actual codebase
-    - **Adapt to your mode**: Return feedback directly in MCP mode, write to {message_file} in hook mode
     - **Stay concise**: Agents need clear, actionable guidance, not essays
 
     Remember: You're the last line of defense before bad code gets written. Take your role seriously.
@@ -154,33 +104,122 @@ QUIBBLER_INSTRUCTIONS = dedent(
 )
 
 
-def load_prompt(source_path: str) -> str:
+HOOK_MODE_INSTRUCTIONS = dedent(
     """
-    Load the quibbler prompt from global config and append project rules if they exist.
+    ## How to Provide Feedback (Hook Mode)
+
+    You are observing agent actions as hook events in **hook mode**:
+    - **Actively monitor** - Watch events and look for quality issues
+    - **Intervene frequently** - Challenge assumptions, verify claims, catch shortcuts
+    - **Write feedback to {message_file}** using the Write tool whenever you see issues
+    - Be aggressive about intervention - it's better to over-communicate than under-communicate
+    - Keep feedback concise and actionable
+
+    ### Feedback Format
+
+    When you find issues:
+    ```
+    ❌ ISSUES FOUND
+
+    1. [Issue]: Brief description
+    Problem: What's wrong
+    Recommendation: What to do instead
+
+    2. [Issue]: ...
+
+    Please address these concerns before proceeding.
+    ```
+
+    ### Use Read tool actively:
+    - When they reference existing files, READ THEM to verify
+    - When they claim to follow patterns, CHECK THE PATTERNS
+    - When uncertain about project structure, EXPLORE IT
+"""
+)
+
+
+MCP_MODE_INSTRUCTIONS = dedent(
+    """
+    ## How to Provide Feedback (MCP Mode)
+
+    You receive structured review requests with "User Instructions" and "Agent Plan" in **MCP mode**:
+    - **Return concise, actionable feedback directly** in your response
+    - Your response IS the feedback that goes back to the agent immediately
+
+    ### Feedback Format
+
+    #### If you find issues:
+    ```
+    ❌ ISSUES FOUND
+
+    1. [Issue]: Brief description
+    Problem: What's wrong
+    Recommendation: What to do instead
+
+    2. [Issue]: ...
+
+    Please address these concerns before proceeding.
+    ```
+
+    #### If everything looks good:
+    ```
+    ✅ APPROVED
+
+    The plan looks solid:
+    - Aligns with user intent
+    - Follows existing patterns
+    - Includes proper verification
+
+    Proceed with implementation.
+    ```
+
+    ### Use Read tool actively:
+    - When they reference existing files, READ THEM to verify
+    - When they claim to follow patterns, CHECK THE PATTERNS
+    - When uncertain about project structure, EXPLORE IT
+"""
+)
+
+
+def load_prompt(source_path: str, mode: Literal["hook", "mcp"] = "hook") -> str:
+    """
+    Load the quibbler prompt with mode-specific instructions and append project rules if they exist.
+
+    Structure:
+    1. Base instructions (from global config, customizable by user)
+    2. Mode-specific instructions (always appended based on mode)
+    3. Project rules (from project .quibbler/rules.md if exists)
 
     Args:
         source_path: Project directory to check for project rules
+        mode: Either "hook" or "mcp" for mode-specific instructions
 
     Returns:
-        The prompt text (global prompt + project rules if they exist)
+        The full prompt text (base + mode-specific + project rules if they exist)
     """
-    GLOBAL_PROMPT_PATH = Path.home() / ".quibbler" / "prompt.md"
-    GLOBAL_PROMPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    global_prompt_path = Path.home() / ".quibbler" / "prompt.md"
+    global_prompt_path.parent.mkdir(parents=True, exist_ok=True)
 
-    RULES_PATH = Path(source_path) / ".quibbler" / "rules.md"
+    # Load or create global base prompt
+    if not global_prompt_path.exists():
+        global_prompt_path.write_text(QUIBBLER_BASE_INSTRUCTIONS)
+        logger.info(f"Created default base prompt at {global_prompt_path}")
 
-    # Load or create global prompt
-    if not GLOBAL_PROMPT_PATH.exists():
-        GLOBAL_PROMPT_PATH.write_text(QUIBBLER_INSTRUCTIONS)
-        logger.info(f"Created default prompt at {GLOBAL_PROMPT_PATH}")
+    logger.info(f"Loading base prompt from {global_prompt_path} for mode={mode}")
+    base_prompt = global_prompt_path.read_text()
 
-    logger.info(f"Loading global prompt from {GLOBAL_PROMPT_PATH}")
-    base_prompt = GLOBAL_PROMPT_PATH.read_text()
+    # Append mode-specific instructions
+    prompt = (
+        base_prompt
+        + "\n\n"
+        + (MCP_MODE_INSTRUCTIONS if mode == "mcp" else HOOK_MODE_INSTRUCTIONS)
+    )
 
     # Append project-specific rules if they exist
-    if RULES_PATH.exists():
-        rules_content = RULES_PATH.read_text()
-        logger.info(f"Loading project rules from {RULES_PATH}")
-        return base_prompt + "\n\n## Project-Specific Rules\n\n" + rules_content
+    rules_path = Path(source_path) / ".quibbler" / "rules.md"
+    if rules_path.exists():
+        rules_content = rules_path.read_text()
+        logger.info(f"Loading project rules from {rules_path}")
+        prompt += "\n\n## Project-Specific Rules\n\n" + rules_content
 
-    return base_prompt
+    return prompt

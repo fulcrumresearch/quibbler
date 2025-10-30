@@ -35,7 +35,7 @@ async def get_or_create_quibbler(project_path: str) -> Quibbler:
     quibbler = _quibblers.get(project_path)
 
     if quibbler is None:
-        system_prompt = load_prompt(project_path)
+        system_prompt = load_prompt(project_path, mode="mcp")
         config = load_config(project_path)
         quibbler = Quibbler(
             system_prompt=system_prompt,

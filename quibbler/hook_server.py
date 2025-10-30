@@ -51,7 +51,7 @@ async def get_or_create_quibbler(session_id: str, source_path: str) -> Quibbler:
     quibbler = _quibblers.get(session_id)
 
     if quibbler is None:
-        system_prompt = load_prompt(source_path)
+        system_prompt = load_prompt(source_path, mode="hook")
         config = load_config(source_path)
         quibbler = Quibbler(
             system_prompt=system_prompt,
