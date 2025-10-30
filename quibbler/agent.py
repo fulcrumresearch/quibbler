@@ -253,7 +253,7 @@ class QuibblerMCP(Quibbler):
 class QuibblerHook(Quibbler):
     """Quibbler agent for hook mode - processes events asynchronously"""
 
-    session_id: str
+    session_id: str = field(kw_only=True)
 
     async def enqueue(self, evt: dict[str, Any]) -> None:
         """
