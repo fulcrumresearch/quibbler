@@ -120,8 +120,6 @@ export ANTHROPIC_API_KEY="your-api-key-here"
 quibbler hook server
 # Or specify a custom port:
 quibbler hook server 8081
-# Or use the shorthand (defaults to 'server' subcommand):
-quibbler hook 8081
 ```
 
 Keep this server running in the background. It will receive hook events from Claude Code.

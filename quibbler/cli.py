@@ -94,20 +94,6 @@ def cmd_hook_notify(args):
 
 def main():
     """Main CLI entry point"""
-    # Special handling: if "hook" is followed by a number, inject "server" before it
-    # This allows: quibbler hook 8081 -> quibbler hook server 8081
-    argv = sys.argv[1:]
-    if len(argv) >= 2 and argv[0] == "hook":
-        # Check if the second argument is a number (not a known subcommand)
-        try:
-            int(argv[1])
-            # It's a number! Inject "server" before it
-            argv.insert(1, "server")
-            sys.argv = [sys.argv[0]] + argv
-        except ValueError:
-            # Not a number, let argparse handle it normally
-            pass
-
     parser = argparse.ArgumentParser(
         prog="quibbler",
         description="Code review agent for AI coding assistants",
