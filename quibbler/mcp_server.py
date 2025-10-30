@@ -58,15 +58,13 @@ async def review_code(
     project_path: str,
 ) -> str:
     """
-    Review proposed code changes before implementation.
-    Call this BEFORE writing any code to get feedback from Quibbler.
-    Quibbler checks for quality issues, pattern violations, hallucinations, and ensures the plan aligns with user intent.
+    Review completed code changes after implementation.
+    Call this AFTER writing code to get feedback from Quibbler.
+    Quibbler checks for quality issues, pattern violations, hallucinations, and ensures the changes align with user intent.
 
     Args:
         user_instructions: The exact instructions the user gave (what they actually asked for)
-        agent_plan: The specific code changes you plan to make. Include file names,
-                   function signatures, key logic, and implementation details.
-                   NOT just a general description - be concrete and detailed.
+        agent_plan: A summary of the specific code changes you made. Include which files were modified, what was added/changed, and key implementation details. NOT just a general description - be concrete and detailed.
         project_path: Absolute path to the project directory
     """
     logger.info("Review requested for project: %s", project_path)
@@ -84,12 +82,12 @@ async def review_code(
         **User Instructions:**
         {user_instructions}
 
-        **Agent's Proposed Changes:**
+        **Agent's Completed Changes:**
         {agent_plan}
 
-        Please review this plan. Check for:
-        - Does it address what the user actually asked for?
-        - Any hallucinated claims or assumptions?
+        Please review the implemented changes. Check for:
+        - Do they address what the user actually asked for?
+        - Any hallucinated claims or assumptions in the implementation?
         - Pattern violations or inconsistencies?
         - Missing verification steps?
         - Inappropriate shortcuts or mocking?

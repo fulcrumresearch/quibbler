@@ -1,6 +1,6 @@
 # Quibbler
 
-Quibbler is a code review agent that integrates with AI coding assistants. It actively reviews proposed code changes before they're implemented, catching quality issues, hallucinations, and pattern violations.
+Quibbler is a code review agent that integrates with AI coding assistants. It reviews completed code changes after they're implemented, catching quality issues, hallucinations, and pattern violations.
 
 Unlike simple linters or static analysis tools, Quibbler is an agent: it can read and understand your codebase context to provide intelligent, context-aware feedback.
 
@@ -45,8 +45,8 @@ Quibbler supports two integration modes:
 ### MCP Mode (For users of all other coding agents)
 
 - Uses the Model Context Protocol for universal compatibility
-- Agent calls `review_code` tool before making changes
-- Synchronous review with blocking feedback
+- Agent calls `review_code` tool after making changes
+- Synchronous review with immediate feedback
 - Simple setup via MCP server configuration
 
 ## Setup
@@ -169,14 +169,14 @@ Project-specific config takes precedence over global config.
 
 ### MCP Mode
 
-1. Your agent calls the `review_code` tool with user instructions and proposed changes
+1. Your agent makes code changes, then calls the `review_code` tool with user instructions and a summary of changes made
 2. Quibbler maintains a persistent review agent per project that:
-   - Reviews the proposed changes against user intent
-   - Uses Read tool to check existing patterns in your codebase
+   - Reviews the completed changes against user intent
+   - Uses Read tool to examine the actual changed files and existing patterns in your codebase
    - Validates claims and checks for hallucinations
-   - Ensures proper testing and verification steps
+   - Verifies proper testing and verification steps were included
 3. Quibbler returns feedback or approval synchronously
-4. Your agent proceeds only after addressing concerns
+4. Your agent addresses any issues found in the review
 
 ### Hook Mode
 

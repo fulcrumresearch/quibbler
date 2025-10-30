@@ -204,8 +204,8 @@ class Quibbler:
             )
         else:
             startup_msg = (
-                "Quibbler session started. You will receive code review requests. "
-                "For each request, analyze the user's intent and the agent's proposed changes. "
+                "Quibbler session started. You will receive code review requests AFTER changes have been made. "
+                "For each request, analyze the user's intent and the agent's completed changes. "
                 "Provide concise, actionable feedback or approval. Build understanding of the codebase over time."
             )
 
