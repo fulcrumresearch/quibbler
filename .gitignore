@@ -3,3 +3,4 @@
 .quibbler/
 .venv/
 .env
+.claude
