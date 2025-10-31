@@ -1,8 +1,8 @@
 # Quibbler
 
-Quibbler is a critic for your coding agent. It runs in the background and critiques your coding agent's actions, either via hooks or an MCP. When your coding agent is once again failing in the same ways, or ignoring your spec, instead of having to prompt it Quibbler will automatically observe and correct it.
+Quibbler is a critic for your coding agent. It runs in the background and critiques your coding agent's actions, either via hooks or an MCP. When your coding agent is once again failing in the same ways, or ignoring your spec, instead of having to prompt it, the Quibbler agent will automatically observe and correct it.
 
-Unlike simple linters or static analysis tools, Quibbler manages to do this by being an agent: it can read and understand your codebase context to provide intelligent feedback. 
+It will also learn rules from your usage, and then enforce them so you don't have to.
 
 ## Demo
 
