@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 from textwrap import dedent
 
-from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
 from mcp.server.stdio import stdio_server
 
 from quibbler.agent import QuibblerMCP, load_config
@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 _quibblers: dict[str, QuibblerMCP] = {}
 
 
-app = Server("quibbler")
+app = FastMCP("quibbler")
 
 
 async def get_or_create_quibbler(project_path: str) -> QuibblerMCP:
