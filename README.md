@@ -1,8 +1,8 @@
 # Quibbler
 
-Quibbler is a code review agent that integrates with AI coding assistants. It reviews completed code changes after they're implemented, catching quality issues, hallucinations, and pattern violations. It compares the agent's actual changes to your instructions to find discrepancies.
+Quibbler is a critic for your coding agent. It runs in the background and critiques your coding agent's actions, either via hooks or an MCP. When your coding agent is once again failing in the same ways, or ignoring your spec, instead of having to prompt it Quibbler will automatically observe and correct it.
 
-Unlike simple linters or static analysis tools, Quibbler is an agent: it can read and understand your codebase context to provide intelligent, context-aware feedback.
+Unlike simple linters or static analysis tools, Quibbler manages to do this by being an agent: it can read and understand your codebase context to provide intelligent feedback. 
 
 ## Demo
 
@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/7100d7a4-005b-42fb-ad20-00ea6ae241fe
 
 ## What Quibbler Prevents
 
-We've found Quibbler useful in preventing agents from:
+We've found Quibbler useful in automatically preventing agents from:
 
 - Fabricating results without running commands
 - Not running tests or skipping verification steps
