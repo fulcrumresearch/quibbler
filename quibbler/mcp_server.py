@@ -109,20 +109,15 @@ async def cleanup():
     logger.info("Cleaned up all quibbler agents")
 
 
-async def main():
+def main():
     """Run the MCP server via stdio"""
     logger.info("Starting Quibbler MCP Server")
     try:
-        async with stdio_server() as (read_stream, write_stream):
-            await app.run(
-                read_stream,
-                write_stream,
-                app.create_initialization_options(),
-            )
+        app.run()
     finally:
-        await cleanup()
+        asyncio.run(cleanup())
 
 
 def run_server():
     """Entry point for running the server"""
-    asyncio.run(main())
+    main()
