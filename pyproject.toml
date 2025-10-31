@@ -12,6 +12,11 @@ dependencies = [
     "uvicorn>=0.38.0",
 ]
 
+[project.optional-dependencies]
+bedrock = [
+    "boto3>=1.35.0",
+]
+
 [project.scripts]
 quibbler = "quibbler.cli:main"
 

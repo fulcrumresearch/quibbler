@@ -35,6 +35,20 @@ Using pip:
 pip install quibbler
 ```
 
+### AWS Bedrock Support
+
+Quibbler supports AWS Bedrock as an alternative to the Anthropic API. This is useful if you have AWS credits or want to use Bedrock's infrastructure.
+
+To use Bedrock, install the optional dependency:
+
+```bash
+pip install quibbler[bedrock]
+# or with uv:
+uv tool install 'quibbler[bedrock]'
+```
+
+Configure AWS credentials via environment variables or `~/.aws/credentials`, then set `backend: "bedrock"` in your config (see Configuration section below).
+
 ## Choosing Your Mode
 
 Quibbler supports two integration modes:
@@ -149,13 +163,16 @@ When Claude Code runs in this project, Quibbler will automatically observe and i
 
 ## Configuration
 
-By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by creating or editing:
+By default, Quibbler uses the Anthropic API with Claude Haiku 4.5 for speed. You can customize the model and backend by creating config files.
+
+### Using Anthropic API (default)
 
 **Global config** (`~/.quibbler/config.json`):
 
 ```json
 {
-  "model": "claude-sonnet-4-5"
+  "model": "claude-sonnet-4-5",
+  "backend": "anthropic"
 }
 ```
 
@@ -163,9 +180,44 @@ By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by cre
 
 ```json
 {
-  "model": "claude-sonnet-4-5"
+  "model": "claude-sonnet-4-5",
+  "backend": "anthropic"
 }
 ```
+
+Set your API key:
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key"
+```
+
+### Using AWS Bedrock
+
+**Config** (`.quibbler/config.json`):
+
+```json
+{
+  "model": "claude-haiku-4-5",
+  "backend": "bedrock"
+}
+```
+
+Configure AWS credentials:
+
+```bash
+export AWS_ACCESS_KEY_ID="your-access-key"
+export AWS_SECRET_ACCESS_KEY="your-secret-key"
+export AWS_REGION="us-east-1"
+# Or use ~/.aws/credentials
+```
+
+**Supported models:**
+
+- `claude-haiku-4-5` (or `claude-haiku-4-5-20251001`)
+- `claude-sonnet-4-5` (or `claude-sonnet-4-5-20250514`)
+- `claude-opus-4` (or `claude-opus-4-1-20250805`)
+
+Or use full Bedrock inference profile IDs like `global.anthropic.claude-haiku-4-5-20251001-v1:0`
 
 Project-specific config takes precedence over global config.
 
