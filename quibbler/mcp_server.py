@@ -2,8 +2,8 @@
 """
 Quibbler MCP server - exposes review_code tool for agents to call before making changes.
 
-Required environment:
-  ANTHROPIC_API_KEY=...  # Required by Claude SDK
+Optional environment:
+  ANTHROPIC_API_KEY=...  # Optional - Claude SDK supports auto-login with Claude Code/Max accounts
 
 The MCP client spawns this server automatically via stdio.
 """

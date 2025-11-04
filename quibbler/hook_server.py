@@ -2,8 +2,8 @@
 """
 Quibbler server - receives hook events and routes them to quibbler agents.
 
-Required environment:
-  ANTHROPIC_API_KEY=...  # Required by Claude SDK
+Optional environment:
+  ANTHROPIC_API_KEY=...  # Optional - Claude SDK supports auto-login with Claude Code/Max accounts
 
 Run:
   quibbler server [port]

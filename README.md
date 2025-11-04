@@ -78,6 +78,8 @@ Add Quibbler to your agent's MCP server configuration.
 }
 ```
 
+**Note**: If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead.
+
 **For other MCP-compatible agents**: Refer to your agent's documentation for MCP server configuration.
 
 #### 2. Add to AGENTS.md
@@ -120,11 +122,13 @@ agent_plan="""Changes made:
 In a terminal, start the Quibbler hook server:
 
 ```bash
-export ANTHROPIC_API_KEY="your-api-key-here"
+export ANTHROPIC_API_KEY="your-api-key-here"  # Optional - see note below
 quibbler hook server
 # Or specify a custom port:
 quibbler hook server 8081
 ```
+
+**Note**: If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead.
 
 Keep this server running in the background. It will receive hook events from Claude Code.
 
