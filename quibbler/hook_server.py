@@ -57,6 +57,8 @@ async def get_or_create_quibbler(session_id: str, source_path: str) -> QuibblerH
             system_prompt=system_prompt,
             source_path=source_path,
             model=config.model,
+            allowed_tools=config.allowed_tools,
+            mcp_servers=config.mcp_servers,
             session_id=session_id,
         )
         await quibbler.start()

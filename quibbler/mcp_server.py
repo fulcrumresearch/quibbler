@@ -44,6 +44,8 @@ async def get_or_create_quibbler(project_path: str) -> QuibblerMCP:
             system_prompt=system_prompt,
             source_path=project_path,
             model=config.model,
+            allowed_tools=config.allowed_tools,
+            mcp_servers=config.mcp_servers,
         )
         await quibbler.start()
         _quibblers[project_path] = quibbler

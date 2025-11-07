@@ -156,13 +156,20 @@ When Claude Code runs in this project, Quibbler will automatically observe and i
 
 ## Configuration
 
-By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by creating or editing:
+By default, Quibbler uses Claude Haiku 4.5 for speed. You can customize Quibbler's behavior by creating or editing:
 
 **Global config** (`~/.quibbler/config.json`):
 
 ```json
 {
-  "model": "claude-sonnet-4-5"
+  "model": "claude-sonnet-4-5",
+  "allowed_tools": ["Read", "Write", "Bash"],
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/directory"]
+    }
+  }
 }
 ```
 
@@ -170,11 +177,28 @@ By default, Quibbler uses Claude Haiku 4.5 for speed. You can change this by cre
 
 ```json
 {
-  "model": "claude-sonnet-4-5"
+  "model": "claude-sonnet-4-5",
+  "allowed_tools": ["Read", "Write", "Bash"],
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/directory"]
+    }
+  }
 }
 ```
 
 Project-specific config takes precedence over global config.
+
+### Configuration Options
+
+- **`model`**: The Claude model to use (default: `claude-haiku-4-5-20251001`)
+- **`allowed_tools`**: List of tools Quibbler can use (default: `["Read", "Write"]`)
+  - Available tools: `Read`, `Write`, `Edit`, `Bash`, `Glob`, `Grep`, and others
+  - Add more tools to give Quibbler additional capabilities (e.g., `Bash` for running tests)
+- **`mcp_servers`**: Dictionary of MCP servers to connect Quibbler to
+  - Allows Quibbler to access additional tools and context via MCP
+  - Format follows standard MCP server configuration (command, args, env)
 
 ## How It Works
 

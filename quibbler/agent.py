@@ -38,6 +38,8 @@ class QuibblerConfig:
     """Configuration for Quibbler agent"""
 
     model: str = DEFAULT_MODEL
+    allowed_tools: list[str] = field(default_factory=lambda: ["Read", "Write"])
+    mcp_servers: dict[str, Any] = field(default_factory=dict)
 
 
 def load_config(source_path: str) -> QuibblerConfig:
@@ -62,10 +64,17 @@ def load_config(source_path: str) -> QuibblerConfig:
             with open(project_config) as f:
                 data = json.load(f)
                 model = data.get("model", DEFAULT_MODEL)
+                allowed_tools = data.get("allowed_tools", ["Read", "Write"])
+                mcp_servers = data.get("mcp_servers", {})
                 logger.info(
-                    f"Loaded project config from {project_config}: model={model}"
+                    f"Loaded project config from {project_config}: model={model}, "
+                    f"allowed_tools={allowed_tools}, mcp_servers={list(mcp_servers.keys())}"
                 )
-                return QuibblerConfig(model=model)
+                return QuibblerConfig(
+                    model=model,
+                    allowed_tools=allowed_tools,
+                    mcp_servers=mcp_servers,
+                )
         except Exception as e:
             logger.warning(f"Failed to load project config from {project_config}: {e}")
 
@@ -76,8 +85,17 @@ def load_config(source_path: str) -> QuibblerConfig:
             with open(global_config) as f:
                 data = json.load(f)
                 model = data.get("model", DEFAULT_MODEL)
-                logger.info(f"Loaded global config from {global_config}: model={model}")
-                return QuibblerConfig(model=model)
+                allowed_tools = data.get("allowed_tools", ["Read", "Write"])
+                mcp_servers = data.get("mcp_servers", {})
+                logger.info(
+                    f"Loaded global config from {global_config}: model={model}, "
+                    f"allowed_tools={allowed_tools}, mcp_servers={list(mcp_servers.keys())}"
+                )
+                return QuibblerConfig(
+                    model=model,
+                    allowed_tools=allowed_tools,
+                    mcp_servers=mcp_servers,
+                )
         except Exception as e:
             logger.warning(f"Failed to load global config from {global_config}: {e}")
 
@@ -93,6 +111,8 @@ class Quibbler:
     system_prompt: str
     source_path: str
     model: str = DEFAULT_MODEL
+    allowed_tools: list[str] = field(default_factory=lambda: ["Read", "Write"])
+    mcp_servers: dict[str, Any] = field(default_factory=dict)
 
     queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(), init=False)
     task: asyncio.Task | None = field(default=None, init=False)
@@ -176,11 +196,11 @@ class Quibbler:
         options = ClaudeAgentOptions(
             cwd=self.source_path,
             system_prompt=system_prompt,
-            allowed_tools=["Read", "Write"],
+            allowed_tools=self.allowed_tools,
             permission_mode="acceptEdits",
             model=self.model,
             hooks={},
-            mcp_servers={},
+            mcp_servers=self.mcp_servers,
         )
 
         try:
