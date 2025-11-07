@@ -71,14 +71,17 @@ Add Quibbler to your agent's MCP server configuration.
     "quibbler": {
       "command": "quibbler mcp",
       "env": {
-        "ANTHROPIC_API_KEY": "your-api-key-here"
+        "ANTHROPIC_API_KEY": "your-api-key-here",
+        "QUIBBLER_TOOL_NAME": "review_code"
       }
     }
   }
 }
 ```
 
-**Note**: If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead.
+**Note**:
+- If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead.
+- `QUIBBLER_TOOL_NAME` is optional and defaults to `review_code`. Set it to customize the name of the tool that Quibbler exposes.
 
 **For other MCP-compatible agents**: Refer to your agent's documentation for MCP server configuration.
 

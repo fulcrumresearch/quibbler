@@ -4,6 +4,7 @@ Quibbler MCP server - exposes review_code tool for agents to call before making 
 
 Optional environment:
   ANTHROPIC_API_KEY=...  # Optional - Claude SDK supports auto-login with Claude Code/Max accounts
+  QUIBBLER_TOOL_NAME=...  # Optional - customize the tool name (default: review_code)
 
 The MCP client spawns this server automatically via stdio.
 """
@@ -11,6 +12,7 @@ The MCP client spawns this server automatically via stdio.
 from __future__ import annotations
 
 import asyncio
+import os
 from textwrap import dedent
 
 from mcp.server.fastmcp import FastMCP
@@ -50,8 +52,7 @@ async def get_or_create_quibbler(project_path: str) -> QuibblerMCP:
     return quibbler
 
 
-@app.tool()
-async def review_code(
+async def review_code_impl(
     user_instructions: str,
     agent_plan: str,
     project_path: str,
@@ -99,6 +100,11 @@ async def review_code(
     feedback = await quibbler.review(review_request)
 
     return feedback
+
+
+# Register tool with configured name (from env var or default)
+TOOL_NAME = os.environ.get("QUIBBLER_TOOL_NAME", "review_code")
+app.add_tool(review_code_impl, name=TOOL_NAME)
 
 
 async def cleanup():
