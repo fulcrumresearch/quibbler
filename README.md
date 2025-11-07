@@ -119,16 +119,42 @@ agent_plan="""Changes made:
 
 #### 1. Start Quibbler Hook Server
 
-In a terminal, start the Quibbler hook server:
+**Option A: Install as a System Service (Recommended for macOS)**
+
+Install the hook server to start automatically on login:
 
 ```bash
-export ANTHROPIC_API_KEY="your-api-key-here"  # Optional - see note below
+quibbler service install
+# Or specify a custom port:
+quibbler service install --port 8081
+```
+
+This installs a launchd service that:
+
+- Starts automatically on login
+- Restarts automatically if it crashes
+- Persists across reboots
+- Logs to `~/.quibbler/hookserver.log`
+
+To manage the service:
+
+```bash
+quibbler service status      # Check if running
+quibbler service uninstall   # Remove the service
+```
+
+**Note**: If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead. If you need to set environment variables (like `ANTHROPIC_API_KEY`), you'll need to manually edit `~/Library/LaunchAgents/com.quibbler.hookserver.plist` after installation.
+
+**Option B: Run Manually**
+
+Alternatively, start the server manually in a terminal:
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"  # Optional - see note above
 quibbler hook server
 # Or specify a custom port:
 quibbler hook server 8081
 ```
-
-**Note**: If you have a logged-in Claude Code or Claude Max account, the `ANTHROPIC_API_KEY` is optional and authentication will happen automatically. Only provide the API key if you want to use API key authentication instead.
 
 Keep this server running in the background. It will receive hook events from Claude Code.
 

@@ -10,6 +10,11 @@ from quibbler.mcp_server import run_server as run_mcp_server
 from quibbler.hook_server import run_server as run_hook_server
 from quibbler.hook_forward import forward_hook
 from quibbler.hook_display import display_feedback
+from quibbler.service import (
+    cmd_service_install,
+    cmd_service_uninstall,
+    cmd_service_status,
+)
 
 
 def cmd_mcp(args):
@@ -103,7 +108,7 @@ def main():
         dest="command",
         title="Available commands",
         help="Available commands",
-        metavar="{mcp,hook}",
+        metavar="{mcp,hook,service}",
         required=True,
     )
 
@@ -151,6 +156,40 @@ def main():
         "notify", help="Display feedback to agent"
     )
     parser_hook_notify.set_defaults(func=cmd_hook_notify)
+
+    # Service command - manages launchd service (macOS)
+    parser_service = subparsers.add_parser(
+        "service", help="Manage hook server as a system service (macOS)"
+    )
+
+    service_subparsers = parser_service.add_subparsers(
+        dest="service_command",
+        title="Service commands",
+        help="Service management commands",
+        metavar="{install,uninstall,status}",
+        required=True,
+    )
+
+    # Service install subcommand
+    parser_service_install = service_subparsers.add_parser(
+        "install", help="Install hook server as a launchd service"
+    )
+    parser_service_install.add_argument(
+        "--port", type=int, default=8081, help="Port to run on (default: 8081)"
+    )
+    parser_service_install.set_defaults(func=cmd_service_install)
+
+    # Service uninstall subcommand
+    parser_service_uninstall = service_subparsers.add_parser(
+        "uninstall", help="Uninstall hook server service"
+    )
+    parser_service_uninstall.set_defaults(func=cmd_service_uninstall)
+
+    # Service status subcommand
+    parser_service_status = service_subparsers.add_parser(
+        "status", help="Check status of hook server service"
+    )
+    parser_service_status.set_defaults(func=cmd_service_status)
 
     args = parser.parse_args()
     args.func(args)
