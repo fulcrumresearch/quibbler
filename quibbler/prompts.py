@@ -4,6 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Literal
 
+from quibbler.config import get_quibbler_home
 from quibbler.logger import get_logger
 
 
@@ -197,7 +198,7 @@ def load_prompt(source_path: str, mode: Literal["hook", "mcp"] = "hook") -> str:
     Returns:
         The full prompt text (base + mode-specific + project rules if they exist)
     """
-    global_prompt_path = Path.home() / ".quibbler" / "prompt.md"
+    global_prompt_path = get_quibbler_home() / "prompt.md"
     global_prompt_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Load or create global base prompt

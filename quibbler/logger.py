@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
 
+from quibbler.config import get_quibbler_home
 
-LOG_DIR = Path.home() / ".quibbler"
+
+LOG_DIR = get_quibbler_home()
 LOG_FILE = LOG_DIR / "quibbler.log"
 
 

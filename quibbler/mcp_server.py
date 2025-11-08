@@ -69,9 +69,11 @@ async def review_code_impl(
         agent_plan: A summary of the specific code changes you made. Include which files were modified, what was added/changed, and key implementation details. NOT just a general description - be concrete and detailed.
         project_path: Absolute path to the project directory
     """
-    logger.info("Review requested for project: %s", project_path)
-    logger.info("User instructions: %s", user_instructions)
-    logger.info("Agent plan: %s", agent_plan)
+    logger.info("=" * 80)
+    logger.info("REVIEW REQUESTED for project: %s", project_path)
+    logger.info("User instructions: %s", user_instructions[:200])
+    logger.info("Agent plan: %s", agent_plan[:200])
+    logger.info("=" * 80)
 
     # Get or create persistent quibbler for this project
     quibbler = await get_or_create_quibbler(project_path)
@@ -100,6 +102,11 @@ async def review_code_impl(
 
     # Enqueue review and wait for feedback
     feedback = await quibbler.review(review_request)
+
+    logger.info("=" * 80)
+    logger.info("REVIEW COMPLETED for project: %s", project_path)
+    logger.info("Feedback: %s", feedback[:500])
+    logger.info("=" * 80)
 
     return feedback
 

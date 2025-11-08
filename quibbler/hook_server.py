@@ -100,9 +100,12 @@ async def hook(request: Request, session_id: str) -> dict[str, str]:
     }
 
     event_type = evt.get("event", "UnknownEvent")
-    logger.info(
-        f"Received event {event_type} for session {session_id} in {source_path}"
-    )
+    logger.info("=" * 80)
+    logger.info(f"HOOK EVENT RECEIVED: {event_type}")
+    logger.info(f"  - session_id: {session_id}")
+    logger.info(f"  - source_path: {source_path}")
+    logger.info(f"  - event data: {json.dumps(evt, indent=2)[:500]}")
+    logger.info("=" * 80)
 
     # Process in background - don't block the response
     asyncio.create_task(_process_event_in_background(session_id, source_path, evt))

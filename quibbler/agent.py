@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -13,8 +14,11 @@ from claude_agent_sdk import (
     ClaudeAgentOptions,
     ClaudeSDKClient,
     TextBlock,
+    ToolUseBlock,
+    ToolResultBlock,
 )
 
+from quibbler.config import get_quibbler_home
 from quibbler.logger import get_logger
 
 
@@ -79,7 +83,7 @@ def load_config(source_path: str) -> QuibblerConfig:
             logger.warning(f"Failed to load project config from {project_config}: {e}")
 
     # Fall back to global config
-    global_config = Path.home() / ".quibbler" / "config.json"
+    global_config = get_quibbler_home() / "config.json"
     if global_config.exists():
         try:
             with open(global_config) as f:
@@ -142,38 +146,53 @@ class Quibbler:
         self, client: ClaudeSDKClient, prompt: str
     ) -> str:
         """Send query to Claude and collect text response"""
+        logger.info("review> sending query: %s", prompt[:200])
         await client.query(prompt)
 
         feedback_parts = []
         async for message in client.receive_response():
-            logger.info("review> type=%s", type(message).__name__)
+            logger.info("review> message type=%s", type(message).__name__)
 
-            # Only extract text from AssistantMessage
+            # Log the message details
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         feedback_parts.append(block.text)
-                        logger.info("review> extracted text: %s", block.text[:100])
+                        logger.info("review> text: %s", block.text[:200])
+                    elif isinstance(block, ToolUseBlock):
+                        logger.info("review> tool_use: name=%s, id=%s", block.name, block.id)
+                        logger.info("review> tool_use inputs: %s", json.dumps(block.input, indent=2)[:500])
+                    elif isinstance(block, ToolResultBlock):
+                        logger.info("review> tool_result: id=%s", block.tool_use_id)
+                        logger.info("review> tool_result content: %s", str(block.content)[:500])
+            else:
+                # Log other message types
+                logger.info("review> message content: %s", str(message)[:500])
 
         return "".join(feedback_parts)
 
     async def _query_and_consume(self, client: ClaudeSDKClient, prompt: str) -> None:
         """Send query to Claude and consume response (don't collect)"""
+        logger.info("event> sending query: %s", prompt[:200])
         await client.query(prompt)
         async for message in client.receive_response():
             msg_type = type(message).__name__
-            logger.info("event> type=%s", msg_type)
+            logger.info("event> message type=%s", msg_type)
 
-            # Log the actual content for debugging
+            # Log the message details
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
-                        logger.info(
-                            "event> ASSISTANT TEXT: %s", block.text[:500]
-                        )  # First 500 chars
-
-            # Log full message to see tool use
-            logger.info("event> FULL MESSAGE: %s", str(message)[:1000])
+                        logger.info("event> text: %s", block.text[:500])
+                    elif isinstance(block, ToolUseBlock):
+                        logger.info("event> tool_use: name=%s, id=%s", block.name, block.id)
+                        logger.info("event> tool_use inputs: %s", json.dumps(block.input, indent=2)[:500])
+                    elif isinstance(block, ToolResultBlock):
+                        logger.info("event> tool_result: id=%s", block.tool_use_id)
+                        logger.info("event> tool_result content: %s", str(block.content)[:500])
+            else:
+                # Log other message types
+                logger.info("event> message content: %s", str(message)[:500])
 
     async def _send_startup_message(self, client: ClaudeSDKClient) -> None:
         """Send startup message - subclasses must override"""
@@ -192,6 +211,13 @@ class Quibbler:
         # Prepare system prompt
         system_prompt = self._prepare_system_prompt()
         logger.info(f"Prepared system prompt preview: {system_prompt[:200]}...")
+
+        # Log configuration
+        logger.info(f"Starting Quibbler with configuration:")
+        logger.info(f"  - model: {self.model}")
+        logger.info(f"  - allowed_tools: {self.allowed_tools}")
+        logger.info(f"  - mcp_servers: {list(self.mcp_servers.keys())}")
+        logger.info(f"  - source_path: {self.source_path}")
 
         options = ClaudeAgentOptions(
             cwd=self.source_path,

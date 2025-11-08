@@ -156,9 +156,24 @@ When Claude Code runs in this project, Quibbler will automatically observe and i
 
 ## Configuration
 
-By default, Quibbler uses Claude Haiku 4.5 for speed. You can customize Quibbler's behavior by creating or editing:
+By default, Quibbler uses Claude Haiku 4.5 for speed. You can customize Quibbler's behavior by creating or editing configuration files.
 
-**Global config** (`~/.quibbler/config.json`):
+### Quibbler Home Directory
+
+By default, Quibbler stores global configuration, logs, and prompts in `~/.quibbler`. You can customize this location by setting the `QUIBBLER_HOME` environment variable:
+
+```bash
+export QUIBBLER_HOME=/custom/path/to/quibbler
+```
+
+This affects:
+- Global config: `$QUIBBLER_HOME/config.json`
+- Custom prompts: `$QUIBBLER_HOME/prompt.md`
+- Logs: `$QUIBBLER_HOME/quibbler.log`
+
+### Configuration Files
+
+**Global config** (`~/.quibbler/config.json` or `$QUIBBLER_HOME/config.json`):
 
 ```json
 {
@@ -228,7 +243,7 @@ Both modes build understanding over time, learning your project's patterns and s
 
 ## Customizing Prompts
 
-You can customize Quibbler's system prompt by editing `~/.quibbler/prompt.md`. The default prompt will be created on first run.
+You can customize Quibbler's system prompt by editing `~/.quibbler/prompt.md` (or `$QUIBBLER_HOME/prompt.md` if you've set `QUIBBLER_HOME`). The default prompt will be created on first run.
 
 Project-specific rules in `.quibbler/rules.md` are automatically loaded and added to the prompt.
 
