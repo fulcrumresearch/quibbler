@@ -4,6 +4,22 @@ Quibbler is a critic for your coding agent. It runs in the background and critiq
 
 It will also learn rules from your usage, and then enforce them so you don't have to.
 
+## ✨ iFlow CLI Version
+
+**Looking for the enhanced iFlow CLI integration?** This repository includes an extended version of Quibbler specifically optimized for [iFlow CLI](https://platform.iflow.cn/en/cli/quickstart) with:
+
+- 🔐 **Automatic authentication** from iFlow's saved credentials (no API key needed)
+- 🚀 **60-80% more token-efficient** with automatic context summarization
+- 🎯 **Smart event filtering** - only processes critical checkpoints
+- 📊 **Enhanced logging** with structured metrics and analytics
+- ⚡ **Better prompts** optimized for catching subtle issues
+
+**[→ Read the iFlow CLI documentation](IFLOW_README.md)**
+
+---
+
+The standard Quibbler (for Claude Code) documentation continues below:
+
 ## Demo
 
 https://github.com/user-attachments/assets/7100d7a4-005b-42fb-ad20-00ea6ae241fe
