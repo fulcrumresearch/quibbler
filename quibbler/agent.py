@@ -251,9 +251,27 @@ class QuibblerMCP(Quibbler):
 
 @dataclass
 class QuibblerHook(Quibbler):
-    """Quibbler agent for hook mode - processes events asynchronously"""
+    """
+    Quibbler agent for hook mode - processes events asynchronously.
+
+    Supports both Claude Code and Cursor platforms:
+    - Claude Code: session_id comes from the "session_id" field in hook events
+    - Cursor: session_id comes from the "conversation_id" field in hook events
+
+    The session_id is used to:
+    - Maintain separate agent instances per session/conversation
+    - Name feedback files (.quibbler/{session_id}.txt)
+    - Route hook events to the correct agent instance
+    """
 
     session_id: str = field(kw_only=True)
+    """
+    Unique identifier for this session/conversation.
+    
+    Platform-specific sources:
+    - Claude Code: extracted from hook event's "session_id" field
+    - Cursor: extracted from hook event's "conversation_id" field
+    """
 
     async def enqueue(self, evt: dict[str, Any]) -> None:
         """

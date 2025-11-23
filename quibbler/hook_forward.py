@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Read hook JSON from stdin and POST to /hook/<session_id>
-Session ID is passed as the first argument
+Read hook JSON from stdin and POST to /hook/{session_id}
+
+Supports both Claude Code and Cursor hook formats:
+- Claude Code: uses "session_id" field
+- Cursor: uses "conversation_id" field
+
+Platform is specified via --platform argument in the CLI.
 """
 
 import json
@@ -12,14 +17,23 @@ from urllib.parse import quote
 import requests
 
 from quibbler.logger import get_logger
+from quibbler.types import Platform
 
 
 logger = get_logger(__name__)
 
 
-def forward_hook() -> int:
-    """Forward hook events to the quibbler server"""
-    logger.info("=== Hook forward starting ===")
+def forward_hook(platform: Platform) -> int:
+    """
+    Forward hook events to the quibbler server.
+
+    Args:
+        platform: The platform type ("cursor" or "claude")
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    logger.info(f"=== Hook forward starting (platform={platform}) ===")
 
     if os.getenv("CLAUDE_MONITOR_SKIP_FORWARD") == "1":
         logger.info("Skipping forward (CLAUDE_MONITOR_SKIP_FORWARD=1)")
@@ -37,15 +51,26 @@ def forward_hook() -> int:
 
         payload = json.loads(raw)
         logger.info(f"Parsed JSON successfully: {list(payload.keys())}")
+
     except json.JSONDecodeError as e:
         logger.error(f"Invalid stdin JSON: {e}")
         logger.error(f"Raw input (first 200 chars): {raw[:200]}")
         return 1
+
     except Exception as e:
         logger.error(f"Unexpected error reading stdin: {e}", exc_info=True)
         return 1
 
-    session_id = payload.get("session_id")
+    match platform:
+        case "cursor":
+            session_id = payload.get("conversation_id")
+        case "claude":
+            session_id = payload.get("session_id")
+
+    if not session_id:
+        logger.error(f"No session_id found for platform {platform}")
+        return 1
+
     source_path = os.getcwd()
 
     logger.info(f"Session ID: {session_id}")
