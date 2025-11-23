@@ -56,6 +56,8 @@ quibbler iflow hook add
 
 **[→ Full iFlow documentation below](#iflow-cli-integration-detailed)**
 
+**[→ Comprehensive MCP Setup Guide](MCP_SETUP_GUIDE.md)** - Detailed setup for all platforms (Claude Code, Cursor, Zed, VS Code, JetBrains, iFlow CLI)
+
 ---
 
 The standard Quibbler (for Claude Code) documentation continues below:
@@ -516,8 +518,10 @@ Default: `claude-haiku-4-5` (fast and cost-efficient)
   "model": "claude-sonnet-4-5",
   "enable_auto_summary": true,
   "enable_smart_triggers": true,
+  "enable_auto_compact": true,
+  "compact_threshold": 0.75,
   "temperature": 0.7,
-  "max_tokens": 4096
+  "max_tokens": null
 }
 ```
 
@@ -527,7 +531,9 @@ Default: `claude-haiku-4-5` (fast and cost-efficient)
 {
   "model": "claude-haiku-4-5",
   "enable_auto_summary": true,
-  "enable_smart_triggers": true
+  "enable_smart_triggers": true,
+  "enable_auto_compact": true,
+  "compact_threshold": 0.80
 }
 ```
 
@@ -538,8 +544,10 @@ Project config takes precedence over global config.
 - **`model`**: Which Claude model to use (`claude-haiku-4-5`, `claude-sonnet-4-5`, etc.)
 - **`enable_auto_summary`** (default: `true`): Automatically summarize old messages when conversation gets long (>15 messages)
 - **`enable_smart_triggers`** (default: `true`): Only process critical events in hook mode (reduces API calls by ~70%)
+- **`enable_auto_compact`** (default: `true`): Auto-compact when context reaches threshold (70-80% of model's limit)
+- **`compact_threshold`** (default: `0.75`): Context percentage to trigger compaction (0.70-0.85 recommended)
 - **`temperature`** (default: `0.7`): Sampling temperature for model responses
-- **`max_tokens`** (default: `4096`): Maximum tokens in model responses
+- **`max_tokens`** (default: `null`): Maximum tokens in model responses (null = unlimited, uses model's max)
 
 ### Custom Prompts
 
@@ -556,7 +564,11 @@ Project-specific rules in `.quibbler/rules.md` are automatically loaded and adde
 
 ## How Token Efficiency Works
 
-### Automatic Context Summarization
+### Intelligent Context Management
+
+Quibbler uses two complementary strategies to manage context efficiently:
+
+#### 1. Message Count Summarization
 
 When a conversation exceeds 15 messages:
 
@@ -577,6 +589,40 @@ After summarization (6 items, ~2500 tokens):
 - [Summary]: "Previous reviews found: mocking issues in tests,
   missing error handling in 3 endpoints, pattern violations..."
 - Message 14-18: [Full recent messages]
+```
+
+#### 2. Context Size Compaction (New!)
+
+When context size reaches 70-80% of model's token limit:
+
+- **Automatically triggered** when estimated tokens exceed threshold
+- **Model-aware**: Knows each model's context window (200K tokens)
+- **Configurable threshold**: Default 75%, adjustable 70-85%
+- **Smart timing**: Checks before each API call
+- **Prevents overflow**: Avoids hitting context limits mid-conversation
+
+**Example:**
+```
+Model: claude-haiku-4-5 (200K token limit)
+Threshold: 75% = 150K tokens
+
+Current context: 148K tokens (74%) → No action
+Current context: 152K tokens (76%) → Auto-compact triggered
+Result: Context compressed to ~50K tokens, conversation continues smoothly
+```
+
+**Configuration:**
+```json
+{
+  "enable_auto_compact": true,
+  "compact_threshold": 0.75
+}
+```
+
+**Environment variable:**
+```bash
+export QUIBBLER_AUTO_COMPACT=true
+export QUIBBLER_COMPACT_THRESHOLD=0.70  # More aggressive compaction
 ```
 
 ### Smart Event Filtering (Hook Mode)

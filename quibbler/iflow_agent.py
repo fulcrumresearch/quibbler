@@ -29,6 +29,16 @@ DEFAULT_IFLOW_MODEL = "claude-haiku-4-5"
 MAX_MESSAGES_BEFORE_SUMMARY = 15  # Summarize when conversation exceeds this
 KEEP_RECENT_MESSAGES = 5  # Always keep this many recent messages
 
+# Model context limits (approximate tokens)
+MODEL_CONTEXT_LIMITS = {
+    "claude-haiku-4-5": 200000,
+    "claude-sonnet-4-5": 200000,
+    "claude-opus-4": 200000,
+    "claude-3-5-sonnet-20241022": 200000,
+    "claude-3-5-haiku-20241022": 200000,
+}
+DEFAULT_CONTEXT_LIMIT = 200000
+
 
 @dataclass
 class ConversationMessage:
@@ -67,6 +77,37 @@ class ContextManager:
     def should_summarize(self) -> bool:
         """Check if we should summarize old messages"""
         return len(self.messages) > MAX_MESSAGES_BEFORE_SUMMARY
+
+    def get_estimated_tokens(self) -> int:
+        """Get estimated total tokens in current context"""
+        total = 0
+        if self.summary:
+            total += len(self.summary) // 4  # Rough estimate
+        for msg in self.messages:
+            total += msg.token_count
+        return total
+
+    def should_compact(self, model: str, threshold: float = 0.75) -> bool:
+        """
+        Check if we should compact context based on model's limit.
+
+        Args:
+            model: Model name to check limit for
+            threshold: Percentage of limit to trigger compaction (default: 0.75 = 75%)
+
+        Returns:
+            True if current context exceeds threshold percentage of model's limit
+        """
+        limit = MODEL_CONTEXT_LIMITS.get(model, DEFAULT_CONTEXT_LIMIT)
+        current = self.get_estimated_tokens()
+        threshold_tokens = int(limit * threshold)
+
+        logger.debug(
+            f"Context check: {current}/{limit} tokens ({current/limit*100:.1f}%), "
+            f"threshold: {threshold_tokens} ({threshold*100:.0f}%)"
+        )
+
+        return current >= threshold_tokens
 
     async def create_summary(self, client: IFlowClient) -> None:
         """
@@ -152,8 +193,10 @@ class IFlowQuibblerConfig:
     model: str = DEFAULT_IFLOW_MODEL
     enable_auto_summary: bool = True  # Auto-summarize long conversations
     enable_smart_triggers: bool = True  # Only trigger on important events
+    enable_auto_compact: bool = True  # Auto-compact at 70-80% context limit
+    compact_threshold: float = 0.75  # Trigger compaction at 75% of context limit
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int | None = None  # No limit by default (None = use model's max)
 
 
 def load_iflow_quibbler_config(source_path: str) -> IFlowQuibblerConfig:
@@ -295,9 +338,22 @@ class IFlowQuibbler:
         # Add user message to context
         self.context.add_message("user", user_message)
 
-        # Check if we should summarize
+        # Check if we should summarize (message count threshold)
         if self.config.enable_auto_summary and self.context.should_summarize():
-            logger.info("Context getting large, creating summary...")
+            logger.info("Message count threshold reached, creating summary...")
+            await self.context.create_summary(self.client)
+
+        # Check if we should compact (context size threshold)
+        elif (
+            self.config.enable_auto_compact
+            and self.context.should_compact(
+                self.config.model, self.config.compact_threshold
+            )
+        ):
+            logger.info(
+                f"Context size at {self.context.get_estimated_tokens()} tokens "
+                f"({self.config.compact_threshold*100:.0f}% threshold), compacting..."
+            )
             await self.context.create_summary(self.client)
 
         # Build messages for API
@@ -307,12 +363,16 @@ class IFlowQuibbler:
         # Call iFlow API
         response_text = ""
         try:
-            async for chunk in self.client.chat_completion(
-                messages=messages,
-                stream=True,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-            ):
+            # Use max_tokens if specified, otherwise let model use its default
+            kwargs = {
+                "messages": messages,
+                "stream": True,
+                "temperature": self.config.temperature,
+            }
+            if self.config.max_tokens is not None:
+                kwargs["max_tokens"] = self.config.max_tokens
+
+            async for chunk in self.client.chat_completion(**kwargs):
                 if "choices" in chunk:
                     for choice in chunk["choices"]:
                         delta = choice.get("delta", {})
