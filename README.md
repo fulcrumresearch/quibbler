@@ -22,7 +22,13 @@ This repository includes an **enhanced version** specifically optimized for [iFl
 npm install -g @iflow/cli
 iflow auth login  # Creates ~/.iflow/settings.json
 
-# 2. Install Quibbler
+# 2. Install Quibbler locally
+git clone https://github.com/linroger/quibbler-flow.git
+cd quibbler-flow
+git checkout claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+uv tool install .
+
+# Or install from GitHub directly
 uv tool install git+https://github.com/linroger/quibbler-flow.git@claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
 ```
 
@@ -73,16 +79,27 @@ Quibbler maintains context across reviews, learning your project's patterns and 
 
 ## Installation
 
-Using uv:
+**Standard Quibbler (from PyPI):**
 
 ```bash
+# Using uv
 uv tool install quibbler
+
+# Using pip
+pip install quibbler
 ```
 
-Using pip:
+**Enhanced iFlow version (from this repository):**
 
 ```bash
-pip install quibbler
+# Clone and install locally
+git clone https://github.com/linroger/quibbler-flow.git
+cd quibbler-flow
+git checkout claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+uv tool install .
+
+# Or install from GitHub directly
+uv tool install git+https://github.com/linroger/quibbler-flow.git@claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
 ```
 
 ## Choosing Your Mode
@@ -298,8 +315,25 @@ This creates `~/.iflow/settings.json` with your authentication credentials that 
 
 ### 3. Install Quibbler for iFlow
 
+**Option A: Local installation (recommended for development)**
+
 ```bash
-# Using uv (recommended)
+# Clone the repository
+git clone https://github.com/linroger/quibbler-flow.git
+cd quibbler-flow
+git checkout claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+
+# Install with uv
+uv tool install .
+
+# Or with pip
+pip install .
+```
+
+**Option B: Direct from GitHub**
+
+```bash
+# Using uv
 uv tool install git+https://github.com/linroger/quibbler-flow.git@claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
 
 # Using pip

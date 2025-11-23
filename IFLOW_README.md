@@ -33,12 +33,44 @@ The standard Quibbler uses Claude's API (requires `ANTHROPIC_API_KEY`). This iFl
 
 ## Installation
 
+**Option A: Local installation (recommended for development)**
+
 ```bash
-# Install from this repository
+# Clone the repository
+git clone https://github.com/linroger/quibbler-flow.git
+cd quibbler-flow
+git checkout claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+
+# Install with uv
+uv tool install .
+
+# Or with pip
+pip install .
+```
+
+**Option B: Direct from GitHub**
+
+```bash
+# Using uv
 uv tool install git+https://github.com/linroger/quibbler-flow.git@claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
 
-# Or using pip
+# Using pip
 pip install git+https://github.com/linroger/quibbler-flow.git@claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+```
+
+**Option C: Editable mode (for active development)**
+
+```bash
+# Clone and install in editable mode
+git clone https://github.com/linroger/quibbler-flow.git
+cd quibbler-flow
+git checkout claude/quibbler-iflow-cli-01LNU37mzAPUiAP7kqKHiWeq
+
+# Install in editable mode with uv
+uv pip install -e .
+
+# Or with pip
+pip install -e .
 ```
 
 ## Prerequisites

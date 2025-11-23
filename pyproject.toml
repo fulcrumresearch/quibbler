@@ -1,5 +1,5 @@
 [project]
-name = "quibbler"
+name = "quibbler-flow"
 version = "0.4.0"
 description = "Code review agent for AI coding assistants (Claude Code, iFlow CLI) via MCP and Hooks"
 readme = "README.md"
@@ -15,6 +15,9 @@ dependencies = [
 
 [project.scripts]
 quibbler = "quibbler.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["quibbler"]
 
 [build-system]
 requires = ["hatchling"]
