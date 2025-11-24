@@ -4,6 +4,9 @@ This guide provides detailed setup instructions for integrating Quibbler with va
 
 ## Table of Contents
 
+- [OpenAI Codex](#openai-codex)
+- [Google Antigravity](#google-antigravity)
+- [Google Gemini CLI](#google-gemini-cli)
 - [Claude Code](#claude-code)
 - [Claude Desktop](#claude-desktop)
 - [Cursor](#cursor)
@@ -13,6 +16,215 @@ This guide provides detailed setup instructions for integrating Quibbler with va
 - [iFlow CLI](#iflow-cli)
 - [Environment Variables](#environment-variables)
 - [Hook Configuration](#hook-configuration)
+
+---
+
+## OpenAI Codex
+
+OpenAI Codex is a suite of AI coding tools with full MCP support as both a client and server.
+
+### Configuration
+
+**File Location:**
+- `~/.codex/config.toml`
+
+Configuration is shared between the Codex CLI and IDE extension.
+
+**TOML Configuration Format:**
+
+```toml
+[mcp_servers.quibbler]
+command = "quibbler"
+args = ["iflow", "mcp"]
+
+[mcp_servers.quibbler.env]
+IFLOW_API_KEY = "your-api-key"
+IFLOW_MODEL = "claude-haiku-4-5"
+QUIBBLER_AUTO_COMPACT = "true"
+QUIBBLER_COMPACT_THRESHOLD = "0.75"
+```
+
+**Command-Line Management:**
+
+```bash
+# Add MCP server
+codex mcp add quibbler --command "quibbler iflow mcp"
+
+# List MCP servers
+codex mcp list
+
+# Remove MCP server
+codex mcp remove quibbler
+```
+
+### Features
+
+- ✅ MCP client support (connect to MCP servers)
+- ✅ MCP server mode (run Codex as an MCP server)
+- ✅ Shared config between CLI and IDE
+- ✅ Web search and tool use
+- ✅ To-do list tracking for complex work
+
+### Running Codex as MCP Server
+
+You can also run Codex as an MCP server to connect it to other MCP clients:
+
+```bash
+# Use Codex with OpenAI Agents SDK
+codex serve
+```
+
+**Sources:**
+- [Model Context Protocol | OpenAI Codex](https://developers.openai.com/codex/mcp/)
+- [Codex CLI Documentation](https://developers.openai.com/codex/cli)
+- [Use Codex with the Agents SDK](https://developers.openai.com/codex/guides/agents-sdk/)
+
+---
+
+## Google Antigravity
+
+Google Antigravity is an agent-first IDE powered by Gemini 3 Pro with full MCP support.
+
+### Configuration
+
+**File Location:**
+- `mcp_config.json` (accessed via IDE)
+
+**Accessing MCP Settings:**
+
+1. Click on Agent session
+2. Select the "…" dropdown at top of editor's side panel
+3. Select "MCP Servers" → "MCP Store"
+4. Click "Manage MCP Servers"
+5. Click "View raw config"
+6. Edit `mcp_config.json`
+
+**JSON Configuration Format:**
+
+```json
+{
+  "mcpServers": {
+    "quibbler": {
+      "command": "quibbler",
+      "args": ["iflow", "mcp"],
+      "env": {
+        "IFLOW_API_KEY": "your-api-key",
+        "QUIBBLER_AUTO_COMPACT": "true",
+        "QUIBBLER_COMPACT_THRESHOLD": "0.75"
+      }
+    }
+  }
+}
+```
+
+### Features
+
+- ✅ Agent-first IDE (Copilot → Coworker paradigm)
+- ✅ Powered by Gemini 3 Pro
+- ✅ Agent Manager for orchestrating autonomous agents
+- ✅ Supports STDIO (local) and HTTP/SSE (remote) transports
+- ✅ OAuth 2.0 support for secure connections
+- ⚠️ Tool limit: ~25 active tools recommended for stability
+
+### Important Notes
+
+- Currently in Public Preview (free to use)
+- Restricts total number of active tools across all MCP servers
+- Reduce enabled tools to ~25 for optimal stability
+
+**Sources:**
+- [Google Antigravity — Custom MCP Server Integration](https://medium.com/@jaintarun7/google-antigravity-custom-mcp-server-integration-to-improve-vibe-coding-f92ddbc1c22d)
+- [Antigravity Template Repository](https://github.com/mapachekurt/antigravity-template)
+- [Antigravity and PostgreSQL Guide](https://medium.com/google-cloud/antigravity-and-postgresql-no-gravity-only-vibes-46a7699fd21f)
+
+---
+
+## Google Gemini CLI
+
+Google's Gemini CLI provides extensive MCP support with command-line management tools.
+
+### Configuration
+
+**File Locations:**
+- **User config**: `~/.gemini/settings.json`
+- **Project config**: `.gemini/settings.json`
+
+**JSON Configuration Format:**
+
+```json
+{
+  "mcpServers": {
+    "quibbler": {
+      "command": "quibbler",
+      "args": ["iflow", "mcp"],
+      "env": {
+        "IFLOW_API_KEY": "your-api-key",
+        "QUIBBLER_AUTO_COMPACT": "true",
+        "QUIBBLER_COMPACT_THRESHOLD": "0.75"
+      }
+    }
+  }
+}
+```
+
+### Command-Line Management
+
+```bash
+# Add MCP server (user scope)
+gemini mcp add quibbler --command "quibbler" --args "iflow,mcp"
+
+# Add MCP server (project scope)
+gemini mcp add quibbler --command "quibbler" --args "iflow,mcp" --scope project
+
+# List configured servers
+gemini mcp list
+
+# Remove server
+gemini mcp remove quibbler
+
+# Verify configuration (in Gemini CLI session)
+/mcp
+```
+
+### FastMCP Integration
+
+For FastMCP-based servers:
+
+```bash
+# Install FastMCP server for Gemini CLI
+fastmcp install gemini-cli
+
+# This automatically configures the server in settings.json
+```
+
+### Features
+
+- ✅ Command-line management tools
+- ✅ FastMCP integration (v2.12.3+)
+- ✅ User and project scopes
+- ✅ OAuth 2.0 authentication for remote servers
+- ✅ Rich multi-part content (text, images, audio, binary)
+- ✅ STDIO and HTTP/SSE transports
+
+### Verification
+
+In Gemini CLI session:
+
+```bash
+/mcp
+```
+
+This lists:
+- Configured MCP servers
+- Connection status
+- Server details
+- Available tools
+
+**Sources:**
+- [MCP servers with the Gemini CLI](https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html)
+- [Gemini CLI 🤝 FastMCP](https://developers.googleblog.com/en/gemini-cli-fastmcp-simplifying-mcp-server-development/)
+- [Gemini CLI Tutorial — GitHub MCP Server](https://medium.com/google-cloud/gemini-cli-tutorial-series-part-5-github-mcp-server-b557ae449e6e)
+- [Gemini CLI MCP Tutorial](https://medium.com/@joe.njenga/gemini-cli-mcp-tutorial-setup-commands-practical-use-step-by-step-example-b57f55db5f4a)
 
 ---
 
@@ -735,13 +947,16 @@ This creates `.iflow/settings.json`:
 
 ## Platform Comparison Matrix
 
-| Feature | Claude Code | Claude Desktop | Cursor | Zed | VS Code | JetBrains | iFlow CLI |
-|---------|-------------|----------------|--------|-----|---------|-----------|-----------|
-| **MCP Support** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Via Proxy | ✅ Full |
-| **Hooks** | ✅ Full | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ⚠️ Check docs |
-| **Env Vars** | ✅ `${VAR}` | ⚠️ Limited | ⚠️ Literal | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Config Scopes** | 3 levels | 1 level | 2 levels | 2 levels | 1 level | Settings | 2 levels |
-| **Auto-compact** | ✅ Hooks | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ If hooks |
+| Feature | Codex | Antigravity | Gemini CLI | Claude Code | Claude Desktop | Cursor | Zed | VS Code | JetBrains | iFlow CLI |
+|---------|-------|-------------|------------|-------------|----------------|--------|-----|---------|-----------|-----------|
+| **MCP Support** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Proxy | ✅ Full |
+| **Hooks** | ⚠️ Check | ❌ No | ❌ No | ✅ Full | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ⚠️ Check |
+| **Env Vars** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ `${VAR}` | ⚠️ Literal | ⚠️ envmcp | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Config Format** | TOML | JSON | JSON | JSON | JSON | JSON | JSON | JSON | Settings | JSON |
+| **CLI Management** | ✅ Yes | ❌ UI only | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ⚠️ UI | ⚠️ UI | ⚠️ UI | ✅ Yes |
+| **MCP as Server** | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| **Config Scopes** | 1 level | 1 level | 2 levels | 3 levels | 1 level | 2 levels | 2 levels | 1 level | Settings | 2 levels |
+| **Auto-compact** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 
 ---
 
