@@ -11,6 +11,10 @@ from quibbler.hook_server import run_server as run_hook_server
 from quibbler.hook_forward import forward_hook
 from quibbler.hook_display import display_feedback
 
+# iFlow-specific imports
+from quibbler.iflow_mcp_server import run_server as run_iflow_mcp_server
+from quibbler.iflow_hook_server import run_server as run_iflow_hook_server
+
 
 def cmd_mcp(args):
     """Run the MCP server via stdio"""
@@ -92,6 +96,23 @@ def cmd_hook_notify(args):
     sys.exit(display_feedback())
 
 
+def cmd_iflow_mcp(args):
+    """Run the iFlow MCP server via stdio"""
+    run_iflow_mcp_server()
+
+
+def cmd_iflow_hook_server(args):
+    """Run the iFlow hook server"""
+    port = getattr(args, "port", None) or 8082
+    run_iflow_hook_server(port=port)
+
+
+def cmd_iflow_hook_add(args):
+    """Add quibbler hooks to .iflow/settings.json for iFlow CLI"""
+    from quibbler.iflow_hook_config import add_iflow_hooks
+    add_iflow_hooks()
+
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
@@ -151,6 +172,59 @@ def main():
         "notify", help="Display feedback to agent"
     )
     parser_hook_notify.set_defaults(func=cmd_hook_notify)
+
+    # iFlow commands - enhanced version for iFlow CLI
+    parser_iflow = subparsers.add_parser(
+        "iflow",
+        help="iFlow CLI integration (enhanced with token efficiency)",
+    )
+    iflow_subparsers = parser_iflow.add_subparsers(
+        dest="iflow_command",
+        title="iFlow commands",
+        help="Enhanced Quibbler for iFlow CLI",
+        metavar="{mcp,hook}",
+        required=True,
+    )
+
+    # iFlow MCP command
+    parser_iflow_mcp = iflow_subparsers.add_parser(
+        "mcp",
+        help="Run iFlow MCP server (auto token auth, context-efficient)",
+    )
+    parser_iflow_mcp.set_defaults(func=cmd_iflow_mcp)
+
+    # iFlow Hook command
+    parser_iflow_hook = iflow_subparsers.add_parser(
+        "hook",
+        help="iFlow hook mode commands",
+    )
+    iflow_hook_subparsers = parser_iflow_hook.add_subparsers(
+        dest="iflow_hook_command",
+        title="iFlow hook commands",
+        help="Hook mode for iFlow CLI",
+        metavar="{server,add}",
+        required=True,
+    )
+
+    # iFlow Hook server
+    parser_iflow_hook_server = iflow_hook_subparsers.add_parser(
+        "server",
+        help="Run iFlow hook server (default port: 8082)",
+    )
+    parser_iflow_hook_server.add_argument(
+        "port",
+        type=int,
+        nargs="?",
+        help="Port to run on (default: 8082)",
+    )
+    parser_iflow_hook_server.set_defaults(func=cmd_iflow_hook_server)
+
+    # iFlow Hook add
+    parser_iflow_hook_add = iflow_hook_subparsers.add_parser(
+        "add",
+        help="Add hooks to .iflow/settings.json",
+    )
+    parser_iflow_hook_add.set_defaults(func=cmd_iflow_hook_add)
 
     args = parser.parse_args()
     args.func(args)
